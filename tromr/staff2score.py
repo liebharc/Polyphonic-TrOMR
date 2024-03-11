@@ -1,5 +1,7 @@
 import os
 
+import argparse
+import urllib.request
 import cv2
 import torch
 import numpy as np
@@ -8,19 +10,26 @@ from albumentations.pytorch import ToTensorV2
 from transformers import PreTrainedTokenizerFast
 
 from model import TrOMR
+from configs import default_config, Config
 
-class StaffToScore(object):
-    def __init__(self, args):
-        self.args = args
-        self.size_h = args.max_height
+checkpoint_file_path = os.path.join(os.path.dirname(__file__), "workspace", "checkpoints", "img2score_epoch47.pth")
+
+class Staff2Score(object):
+    def __init__(self, config: Config):
+        self.config = config
+        self.size_h = config.max_height
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = TrOMR(args)
-        self.model.load_state_dict(torch.load(args.filepaths.checkpoint), strict=True)
+        self.model = TrOMR(config)
+        if not os.path.exists(checkpoint_file_path):
+            raise RuntimeError("Please download the model first to " + checkpoint_file_path)
+        self.model.load_state_dict(torch.load(checkpoint_file_path), strict=False)
         self.model.to(self.device)
         
-        self.lifttokenizer = PreTrainedTokenizerFast(tokenizer_file=args.filepaths.lifttokenizer)
-        self.pitchtokenizer = PreTrainedTokenizerFast(tokenizer_file=args.filepaths.pitchtokenizer)
-        self.rhythmtokenizer = PreTrainedTokenizerFast(tokenizer_file=args.filepaths.rhythmtokenizer)
+        if not os.path.exists(config.filepaths.rhythmtokenizer):
+            raise RuntimeError("Failed to find tokenizer config" + config.filepaths.rhythmtokenizer)
+        self.lifttokenizer = PreTrainedTokenizerFast(tokenizer_file=config.filepaths.lifttokenizer)
+        self.pitchtokenizer = PreTrainedTokenizerFast(tokenizer_file=config.filepaths.pitchtokenizer)
+        self.rhythmtokenizer = PreTrainedTokenizerFast(tokenizer_file=config.filepaths.rhythmtokenizer)
         self.transform = alb.Compose([
             alb.ToGray(always_apply=True),
             alb.Normalize((0.7931, 0.7931, 0.7931), (0.1738, 0.1738, 0.1738)),
@@ -29,34 +38,22 @@ class StaffToScore(object):
         
     def readimg(self, path):
         img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
-        print(1)
-        print(img.shape)
         
         if img.shape[-1] == 4:
             img = 255 - img[:,:,3]
             img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
         elif img.shape[-1] == 3:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        elif len(img.shape) == 2:
+            img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
         else:
             raise RuntimeError("Unsupport image type!")
         
         h, w, c = img.shape
         new_h = self.size_h
         new_w = int(self.size_h / h * w)
-        new_w = new_w // self.args.patch_size * self.args.patch_size
+        new_w = new_w // self.config.patch_size * self.config.patch_size
         img = cv2.resize(img, (new_w, new_h))
-        img = self.transform(image=img)['image'][:1]
-        print(2)
-        print(img.shape)
-        print(img.dtype)
-        return img
-
-    def preprocessing(rgb):
-        h, w, c = rgb.shape
-        new_h = self.size_h
-        new_w = int(self.size_h / h * w)
-        new_w = new_w // self.args.patch_size * self.args.patch_size
-        img = cv2.resize(rgb, (new_w, new_h))
         img = self.transform(image=img)['image'][:1]
         return img
     
@@ -71,16 +68,6 @@ class StaffToScore(object):
                     del toks[b][i]
         return toks
     
-    def predict_img2token(self, rgbimgs):
-        if not isinstance(rgbimgs, list):
-            rgbimgs = [rgbimgs]
-        imgs = [self.preprocessing(item) for item in rgbimgs]
-        imgs = torch.cat(imgs).float().unsqueeze(1)
-        output = self.model.generate(imgs.to(self.device),
-                                    temperature=self.args.get('temperature', .2))
-        rhythm, pitch, lift = output
-        return rhythm, pitch, lift
-    
     def predict_token(self, imgpath):
         imgs = []
         if os.path.isdir(imgpath):
@@ -90,7 +77,7 @@ class StaffToScore(object):
             imgs.append(self.readimg(imgpath))
         imgs = torch.cat(imgs).float().unsqueeze(1)
         output = self.model.generate(imgs.to(self.device),
-                                    temperature=self.args.get('temperature', .2))
+                                    temperature=self.config.temperature)
         rhythm, pitch, lift = output
         return rhythm, pitch, lift
 
@@ -101,12 +88,3 @@ class StaffToScore(object):
         predpitch = self.detokenize(pitch, self.pitchtokenizer)
         predrhythm = self.detokenize(rhythm, self.rhythmtokenizer)
         return predrhythm, predpitch, predlift
-
-if __name__ == "__main__":
-    from configs import getconfig
-    args = getconfig('./workspace/config.yaml')
-    handler = StaffToScore(args)
-    predrhythm, predpitch, predlift = handler.predict('../examples/test2/dark_1962926-44.jpg')
-    print(predrhythm)
-    print(predpitch)
-    print(predlift)

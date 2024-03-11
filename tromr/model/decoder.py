@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from x_transformers.x_transformers import AttentionLayers, TokenEmbedding, AbsolutePositionalEmbedding, Decoder
+from configs import Config
 
 class ScoreTransformerWrapper(nn.Module):
     def __init__(
@@ -80,20 +81,20 @@ def top_k(logits, thres = 0.9):
     return probs
 
 class ScoreDecoder(nn.Module):
-    def __init__(self, transoformer, noteindexes, num_rhythmtoken, ignore_index = -100, pad_value = 0):
+    def __init__(self, transformer, noteindexes, num_rhythmtoken, ignore_index = -100, pad_value = 0):
         super().__init__()
         self.pad_value = pad_value
         self.ignore_index = ignore_index
 
-        self.net = transoformer
-        self.max_seq_len = transoformer.max_seq_len
+        self.net = transformer
+        self.max_seq_len = transformer.max_seq_len
 
         note_mask = torch.zeros(num_rhythmtoken)
         note_mask[noteindexes] = 1
         self.note_mask = nn.Parameter(note_mask)
 
     @torch.no_grad()
-    def generate(self, start_tokens, nonote_tokens, seq_len, eos_token = None, temperature = 1., filter_thres = 0.9, min_p_pow=2.0, min_p_ratio=0.02, **kwargs):
+    def generate(self, start_tokens, nonote_tokens, seq_len, eos_token = None, temperature = 1., filter_thres = 0.9, **kwargs):
         device = start_tokens.device
         was_training = self.net.training
         num_dims = len(start_tokens.shape)
@@ -116,9 +117,9 @@ class ScoreDecoder(nn.Module):
             mask = mask[:, -self.max_seq_len:]
             x_lift = out_lift[:, -self.max_seq_len:]
             x_pitch = out_pitch[:, -self.max_seq_len:]
-            x_rhymthm = out_rhythm[:, -self.max_seq_len:]
+            x_rhythm = out_rhythm[:, -self.max_seq_len:]
             
-            rhythmsp, pitchsp, liftsp, notesp, _ = self.net(x_rhymthm, x_pitch, x_lift,  mask=mask, **kwargs)
+            rhythmsp, pitchsp, liftsp, notesp, _ = self.net(x_rhythm, x_pitch, x_lift, mask=mask, **kwargs)
             
             filtered_lift_logits = top_k(liftsp[:, -1, :], thres = filter_thres)
             filtered_pitch_logits = top_k(pitchsp[:, -1, :], thres = filter_thres)
@@ -150,7 +151,7 @@ class ScoreDecoder(nn.Module):
         self.net.train(was_training)
         return out_rhythm, out_pitch, out_lift
 
-    def forward(self, rhythms, pitchs, lifts,notes, **kwargs):
+    def forward(self, rhythms, pitchs, lifts, notes, **kwargs):
         liftsi = lifts[:, :-1]
         liftso = lifts[:, 1:]
         pitchsi = pitchs[:, :-1]
@@ -166,21 +167,24 @@ class ScoreDecoder(nn.Module):
 
         rhythmsp, pitchsp, liftsp, notesp, x = self.net(rhythmsi, pitchsi, liftsi, **kwargs) 
         
-        loss_consist = self.calConsistencyLoss(rhythmsp, pitchsp, liftsp,notesp)
+        loss_consist = self.calConsistencyLoss(rhythmsp, pitchsp, liftsp, notesp)
         loss_rhythm = F.cross_entropy(rhythmsp.transpose(1, 2), rhythmso, ignore_index = self.ignore_index)
         loss_pitch = F.cross_entropy(pitchsp.transpose(1, 2), pitchso, ignore_index = self.ignore_index)
         loss_lift = F.cross_entropy(liftsp.transpose(1, 2), liftso, ignore_index = self.ignore_index)
         loss_note = F.cross_entropy(notesp.transpose(1, 2), noteso, ignore_index = self.ignore_index)
+        # From the TR OMR paper equation 2
+        loss = 0.1 * (loss_rhythm + loss_pitch + loss_lift + loss_note) + 1.0 * loss_consist
         
         return dict(
             loss_rhythm=loss_rhythm,
             loss_pitch=loss_pitch,
             loss_lift=loss_lift,
             loss_consist=loss_consist,
-            loss_note = loss_note
+            loss_note = loss_note,
+            loss = loss,
         )
 
-    def calConsistencyLoss(self, rhythmsp, pitchsp, liftsp,notesp, gamma=10):
+    def calConsistencyLoss(self, rhythmsp, pitchsp, liftsp, notesp, gamma=10):
         notesp_soft = torch.softmax(notesp, dim=2)
         note_flag = notesp_soft[:,:,1]
         rhythmsp_soft = torch.softmax(rhythmsp, dim=2)
@@ -197,21 +201,21 @@ class ScoreDecoder(nn.Module):
                         F.l1_loss(note_flag, pitchsp_note)) / 3.
         return loss
         
-def get_decoder(args):
+def get_decoder(config: Config):
     return ScoreDecoder(
         ScoreTransformerWrapper(
-            num_note_tokens=args.num_note_tokens,
-            num_rhythm_tokens=args.num_rhythm_tokens,
-            num_pitch_tokens=args.num_pitch_tokens,
-            num_lift_tokens=args.num_lift_tokens,
-            max_seq_len=args.max_seq_len,
-            emb_dim=args.decoder_dim,
+            num_note_tokens=config.num_note_tokens,
+            num_rhythm_tokens=config.num_rhythm_tokens,
+            num_pitch_tokens=config.num_pitch_tokens,
+            num_lift_tokens=config.num_lift_tokens,
+            max_seq_len=config.max_seq_len,
+            emb_dim=config.decoder_dim,
             attn_layers=Decoder(
-                dim=args.decoder_dim,
-                depth=args.decoder_depth,
-                heads=args.decoder_heads,
-                **args.decoder_args
+                dim=config.decoder_dim,
+                depth=config.decoder_depth,
+                heads=config.decoder_heads,
+                **config.decoder_args.to_dict()
             )),
-        pad_value=args.pad_token,
-        num_rhythmtoken = args.num_rhythmtoken,
-        noteindexes = args.noteindexes)
+        pad_value=config.pad_token,
+        num_rhythmtoken = config.num_rhythmtoken,
+        noteindexes = config.noteindexes)
