@@ -4,3 +4,5 @@ primusCalvoRizoAppliedSciences2018.tgz
 /Corpus
 /logs
 /mlruns
+/test-primus
+/tromr/workspace/checkpoints/pytorch_model_*.pth

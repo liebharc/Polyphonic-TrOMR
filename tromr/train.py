@@ -22,8 +22,8 @@ train_index = os.path.join(corpus, 'index.txt')
 
 tr_omr_pretrained = os.path.join(script_location, 'workspace', 'checkpoints', 'img2score_epoch47.pth')
 
-number_of_files = -1
-number_of_epochs = 50
+number_of_files = 100
+number_of_epochs = 5
 
 def index_dataset():
     print('Indexing dataset')
@@ -53,6 +53,7 @@ args = TrainingArguments(
     metric_for_best_model="loss",
     logging_dir='logs',
     save_strategy="epoch",
+    label_names=['rhythms_seq', 'note_seq', 'lifts_seq', 'pitchs_seq'],
 )
 
 if len(sys.argv) > 1 and sys.argv[1] == '--pretrained':
@@ -63,10 +64,6 @@ else:
     model = TrOMR(default_config)
 
 
-#def compute_metrics(eval_pred):
-#    predictions, labels = eval_pred
-#    predictions = np.argmax(predictions, axis=1)
-#    return load_metric("accuracy").compute(predictions=predictions, references=labels)
 timestamp = str(round(time.time()))
 try:
     trainer = Trainer(
@@ -75,17 +72,12 @@ try:
         train_dataset=datasets["train"],
         eval_dataset=datasets["validation"],
         data_collator=data_collator,
-        #compute_metrics=compute_metrics,
     )
 
     trainer.train()
 except KeyboardInterrupt:
     print('Interrupted')
 
-#model.save_pretrained(os.path.join(script_location, 'homer', 'transformer', 'workspace', 'checkpoints'))
-
-model_destination = os.path.join(script_location, 'homer', 'transformer', 'workspace', 'checkpoints', f'pytorch_model_{timestamp}.pth')
+model_destination = os.path.join(script_location, 'workspace', 'checkpoints', f'pytorch_model_{timestamp}.pth')
 torch.save(model.state_dict(), model_destination)
 print(f'Saved model to {model_destination}')
-
-#outputs = trainer.predict(preprocessed_test_ds)
