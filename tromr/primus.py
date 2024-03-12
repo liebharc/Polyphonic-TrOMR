@@ -55,6 +55,12 @@ def add_image_into_tr_omr_canvas(image: np.ndarray, margin_top: int, margin_bott
 
 
 class CTC_PriMuS():
+    """
+    Dataset class for the CTC PriMuS dataset and all datasets which have been preprocessed to have the same format.
+
+    The format is an image file and a semantic file. The semantic file contains the ground truth.
+    """
+
     gt_element_separator = '-'
     PAD_COLUMN = 0
     validation_dict = None
@@ -149,8 +155,10 @@ class CTC_PriMuS():
         # IMAGE
         if self.distortions:
             sample_img = cv2.imread(sample_fullpath + '_distorted.jpg', cv2.IMREAD_GRAYSCALE) # Grayscale is assumed
-        else:
+        elif os.path.exists(sample_fullpath + '.png'):
             sample_img = cv2.imread(sample_fullpath + '.png', cv2.IMREAD_GRAYSCALE)  # Grayscale is assumed!
+        else:
+            sample_img = cv2.imread(sample_fullpath + '.jpg', cv2.IMREAD_GRAYSCALE)
         height = self.config.max_height
         #sample_img = resize(sample_img,height)
         # Resizing is wrong, instead center and surround with white

@@ -6,3 +6,7 @@ primusCalvoRizoAppliedSciences2018.tgz
 /mlruns
 /test-primus
 /tromr/workspace/checkpoints/pytorch_model_*.pth
+/grandstaff.tgz
+/grandstaff
+/hum2xml
+/cpms_index.txt

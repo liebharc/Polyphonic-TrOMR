@@ -17,25 +17,43 @@ vocabulary = os.path.join(script_location, 'vocabulary_semantic.txt')
 rhythm_tokenizer = os.path.join(script_location, 'workspace', 'tokenizers', 'tokenizer_rhythm.json')
 pitch_tokenizer = os.path.join(script_location,  'workspace', 'tokenizers', 'tokenizer_pitch.json')
 git_root = os.path.join(script_location, '..')
-corpus = os.path.join(git_root, 'Corpus')
-train_index = os.path.join(corpus, 'index.txt')
+primus = os.path.join(git_root, 'Corpus')
+cpms = os.path.join(git_root, 'CPMS')
+primus_train_index = os.path.join(primus, 'index.txt')
+cpms_train_index = os.path.join(git_root, 'cpms_index.txt')
 
 tr_omr_pretrained = os.path.join(script_location, 'workspace', 'checkpoints', 'img2score_epoch47.pth')
 
-number_of_files = 100
+number_of_files = 10000
 number_of_epochs = 5
 
-def index_dataset():
-    print('Indexing dataset')
-    with open(train_index, 'w') as f:
-        for path in Path(corpus).rglob('*distorted.jpg'):
+def index_primus_dataset():
+    print('Indexing Primus dataset')
+    with open(primus_train_index, 'w') as f:
+        for path in Path(primus).rglob('*distorted.jpg'):
             f.write(str(path.relative_to(git_root)) + '\n')
     print('Done indexing')
 
-if not os.path.exists(train_index):
-    index_dataset()
+if not os.path.exists(primus_train_index):
+    index_primus_dataset()
 
-datasets = load_primus(git_root, train_index, vocabulary, rhythm_tokenizer, pitch_tokenizer, default_config, val_split = 0.1, number_of_files=number_of_files)
+def index_cpms_dataset():
+    print('Indexing CPMS dataset')
+    with open(cpms_train_index, 'w') as f:
+        for path in Path(os.path.join(cpms, "semantic", "training")).rglob('*.jpg'):
+            semantic = str(path.relative_to(git_root)).replace(".jpg", ".semantic")
+            if os.path.exists(semantic):
+                f.write(str(path.relative_to(git_root)) + '\n')
+    print('Done indexing')
+
+if not os.path.exists(primus_train_index):
+    index_primus_dataset()
+
+if not os.path.exists(cpms_train_index):
+    index_cpms_dataset()
+
+datasets = load_primus(git_root, primus_train_index, vocabulary, rhythm_tokenizer, pitch_tokenizer, default_config, val_split = 0.1, number_of_files=number_of_files)
+#datasets = load_primus(git_root, cpms_train_index, vocabulary, rhythm_tokenizer, pitch_tokenizer, default_config, val_split = 0.1, number_of_files=number_of_files)
     
 data_collator = DataCollator()
 
