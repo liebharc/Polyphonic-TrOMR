@@ -3,6 +3,7 @@ import numpy as np
 import os
 from pathlib import Path
 import sys
+import shutil
 from typing import List
 import time
 
@@ -10,6 +11,7 @@ from transformers import TrainingArguments, Trainer
 from primus import CTC_PriMuS, load_primus, DataCollator
 from model.tromr_arch import TrOMR
 from configs import default_config
+from convert_grandstaff import convert_grandstaff
 
 script_location = os.path.dirname(os.path.realpath(__file__))
 
@@ -18,9 +20,11 @@ rhythm_tokenizer = os.path.join(script_location, 'workspace', 'tokenizers', 'tok
 pitch_tokenizer = os.path.join(script_location,  'workspace', 'tokenizers', 'tokenizer_pitch.json')
 git_root = os.path.join(script_location, '..')
 primus = os.path.join(git_root, 'Corpus')
+grandstaff = os.path.join(git_root, 'grandstaff')
 cpms = os.path.join(git_root, 'CPMS')
 primus_train_index = os.path.join(primus, 'index.txt')
 cpms_train_index = os.path.join(git_root, 'cpms_index.txt')
+grandstaff_train_index = os.path.join(grandstaff, 'index.txt')
 
 tr_omr_pretrained = os.path.join(script_location, 'workspace', 'checkpoints', 'img2score_epoch47.pth')
 
@@ -52,8 +56,15 @@ if not os.path.exists(primus_train_index):
 if not os.path.exists(cpms_train_index):
     index_cpms_dataset()
 
-datasets = load_primus(git_root, primus_train_index, vocabulary, rhythm_tokenizer, pitch_tokenizer, default_config, val_split = 0.1, number_of_files=number_of_files)
+if not os.path.exists(grandstaff_train_index):
+    convert_grandstaff()
+
+if os.path.exists(os.path.join(git_root, "test_primus")):
+    shutil.rmtree(os.path.join(git_root, "test_primus"))
+
+#datasets = load_primus(git_root, primus_train_index, vocabulary, rhythm_tokenizer, pitch_tokenizer, default_config, val_split = 0.1, number_of_files=number_of_files)
 #datasets = load_primus(git_root, cpms_train_index, vocabulary, rhythm_tokenizer, pitch_tokenizer, default_config, val_split = 0.1, number_of_files=number_of_files)
+datasets = load_primus(git_root, grandstaff_train_index, vocabulary, rhythm_tokenizer, pitch_tokenizer, default_config, val_split = 0.1, number_of_files=number_of_files)
     
 data_collator = DataCollator()
 

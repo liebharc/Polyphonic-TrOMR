@@ -8,6 +8,7 @@ from pathlib import Path
 from torchvision import transforms as tr
 from torchvision.transforms import Compose
 import PIL
+import xmltodict
 
 script_location = os.path.dirname(os.path.realpath(__file__))
 git_root = os.path.join(script_location, '..')
@@ -61,17 +62,123 @@ def _distort_image(path):
     augmented_image.save(path)
     return path
     
-    
-def _musix_xml_to_semantic(path):
-    pass
+def _music_xml_to_semantic(path, basename):
+    result = []
+    with open(path) as f:
+        musicxml = xmltodict.parse(f.read())
+        parts = musicxml['score-partwise']["part"]
+        for part in parts:
+            semantic = _music_part_to_semantic(part)
+            result.append(semantic)
+    if len(result) != 2:
+        return None, None
+    with open(basename + "_upper.semantic", "w") as f:
+        f.write(" ".join(result[0]))
+    with open(basename + "_lower.semantic", "w") as f:
+        f.write(" ".join(result[1]))
+    return basename + "_upper.semantic", basename + "_lower.semantic"
+
+def _ensure_list(obj):
+    if type(obj) is list:
+        return obj
+    return [obj]
+
+def _count_dots(note):
+    if "dot" not in note:
+        return ""
+    return "." * len(_ensure_list(note["dot"]))
+
+def _music_part_to_semantic(part):
+    try:
+        semantic = []
+        for measure in _ensure_list(part["measure"]):
+            chord = []
+            if "attributes" in measure:
+                for attribute in _ensure_list(measure["attributes"]):
+                    if "clef" in attribute:
+                        semantic.append("clef-" + attribute["clef"]["sign"] + attribute["clef"]["line"])
+                    if "time" in attribute:
+                        semantic.append("timeSignature-" + attribute["time"]["beats"] + "/" + attribute["time"]["beat-type"])
+                    if "key" in attribute:
+                        semantic.append("keySignature-" + _circle_of_fifth_to_key_signature(int(attribute["key"]["fifths"])))
+            if "note" in measure:
+                for note in  _ensure_list(measure["note"]):
+                    if "rest" in note:
+                        dot = _count_dots(note)
+                        semantic.append("rest-" + _translate_duration(note["type"]) + dot)
+                        if len(chord) > 0:
+                            # FLush the previous chord
+                            semantic.append("|".join(chord))
+                            chord = []
+                    if "pitch" in note:
+                        if not "chord" in note:
+                            if len(chord) > 0:
+                                # FLush the previous chord
+                                semantic.append("|".join(chord))
+                                chord = []
+                        chord.append("note-" + note["pitch"]["step"] + _get_alter(note["pitch"]) + note["pitch"]["octave"] + "_" + _translate_duration(note["type"]) + _count_dots(note))
+                        
+            if len(chord) > 0:
+                # FLush the last chord
+                semantic.append("|".join(chord))
+        return semantic
+    except Exception as e:
+        print("Failure at ", part)
+        raise e
+
+def _circle_of_fifth_to_key_signature(circle):
+    definition = {
+        -7: "CbM",
+        -6: "GbM",
+        -5: "DbM",
+        -4: "AbM",
+        -3: "EbM",
+        -2: "BbM",
+        -1: "FM",
+        0: "CM",
+        1: "GM",
+        2: "DM",
+        3: "AM",
+        4: "EM",
+        5: "BM",
+        6: "F#M",
+        7: "C#M",
+    }
+    return definition[circle]
+
+def _translate_duration(duration):
+    definition = {
+        "breve": "double_whole",
+        "whole": "whole",
+        "half": "half",
+        "quarter": "quarter",
+        "eighth": "eighth",
+        "16th": "sixteenth",
+        "32nd": "thirty_second",
+        "64th": "sixty_fourth",
+    }
+    return definition[duration]
+
+def _get_alter(note):
+    if not "alter" in note:
+        return ""
+    if note["alter"] == "1":
+        return "#"
+    if note["alter"] == "-1":
+        return "b"
+    return ""
 
 def convert_grandstaff():
     if os.path.exists(grandstaff_train_index):
         return
     
-    print('Indexing Grandstaff dataset')
+    print('Indexing Grandstaff dataset, this can take several hours')
     with open(grandstaff_train_index, 'w') as f:
+        file_number = 0
         for path in Path(grandstaff_root).rglob('*.krn'):
+            file_number += 1
+            if file_number % 1000 == 0:
+                print(f"Processed {file_number} files")
             basename = str(path).replace(".krn", "")
             image_file = str(path).replace(".krn", ".jpg")
             distored = str(path).replace(".krn", "_distorted.jpg")
@@ -85,7 +192,12 @@ def convert_grandstaff():
             if upper is None:
                 print(f"Failed to split {image_file}")
                 continue
-            f.write(str(Path(image_file).relative_to(git_root)) + '\n')
+            upper_semantic, lower_semantic =_music_xml_to_semantic(musicxml, basename)
+            if upper_semantic is None:
+                print(f"Failed to convert {musicxml}")
+                continue
+            f.write(str(Path(upper).relative_to(git_root)) + '\n')
+            f.write(str(Path(lower).relative_to(git_root)) + '\n')
     print('Done indexing')
 
 if __name__ == "__main__":
