@@ -52,6 +52,7 @@ def add_image_into_tr_omr_canvas(image: np.ndarray, margin_top: int, margin_bott
 
     return new_image, new_shape[0] / width
 
+git_root = os.path.join(script_location, '..')
 
 class CTC_PriMuS():
     """
@@ -65,10 +66,9 @@ class CTC_PriMuS():
     validation_dict = None
 
 
-    def __init__(self, corpus_dirpath, corpus_list, rhythm_vocab, pitch_vocab, note_vocab, lift_vocab, distortions, config: Config):
+    def __init__(self, corpus_list, rhythm_vocab, pitch_vocab, note_vocab, lift_vocab, distortions, config: Config):
         self.current_idx = 0
         self.distortions = distortions
-        self.corpus_dirpath = corpus_dirpath
         self.corpus_list = corpus_list
         self.rhythm_vocab = rhythm_vocab
         self.pitch_vocab = pitch_vocab
@@ -110,7 +110,7 @@ class CTC_PriMuS():
     
     def __getitem__(self, idx):
         sample_filepath = self.corpus_list[idx]
-        sample_fullpath = self.corpus_dirpath + '/' + sample_filepath.split(".")[0].replace("_distorted", "")
+        sample_fullpath = os.path.join(git_root, sample_filepath.split(".")[0].replace("_distorted", ""))
 
         # IMAGE
         if self.distortions:
@@ -211,40 +211,10 @@ pitch_tokenizer_path = os.path.join(script_location,  'workspace', 'tokenizers',
 note_tokenizer_path = os.path.join(script_location,  'workspace', 'tokenizers', 'tokenizer_note.json')
 lift_tokenizer_path = os.path.join(script_location,  'workspace', 'tokenizers', 'tokenizer_lift.json')
 
-def _create_vocabulary(dictionary_path, rhythm_tokenizer_vocab):
-
-    # Dictionary, translate primus to the rhythm vocabulary
-    rhythm_vocab = {}
-        
-    dict_file = open(dictionary_path,'r')
-    dict_list = dict_file.read().splitlines()
-    for word in dict_list:
-        if not word in rhythm_vocab:
-            vacab_word = word
-            vacab_word = _translate_note_to_rhythm(vacab_word)
-            vacab_word = _translate_multirests(vacab_word, rhythm_tokenizer_vocab)
-            vacab_word = _translate_time_signature(vacab_word, rhythm_tokenizer_vocab)
-            if vacab_word == "tie":
-                vacab_word = "[PAD]"
-            if not vacab_word in rhythm_tokenizer_vocab:
-                raise Exception('Warning: ' + word + ' not in tokenizer vocabulary!')
-            rhythm_vocab[word] = rhythm_tokenizer_vocab[vacab_word]
-
-    dict_file.close()
-    return rhythm_vocab
-
-def load_primus(corpus_dirpath, 
-                corpus_filepath, 
-                dictionary_path, 
+def load_primus(samples, 
                 config, 
                 distortions = False, 
-                val_split = 0.0, 
-                number_of_files = 10000):
-    # Corpus
-    corpus_file = open(corpus_filepath,'r')
-    corpus_list = corpus_file.read().splitlines()
-    corpus_file.close()
-
+                val_split = 0.0):
     rhythm_tokenizer_config = json.load(open(rhythm_tokenizer_path,'r'))
     pitch_tokenizer_config = json.load(open(pitch_tokenizer_path,'r'))
     note_tokenizer_config = json.load(open(note_tokenizer_path,'r'))
@@ -256,16 +226,13 @@ def load_primus(corpus_dirpath,
     lift_tokenizer_vocab = lift_tokenizer_config['model']['vocab']
     
     # Train and validation split
-    random.shuffle(corpus_list) 
-    if number_of_files > 0:
-        corpus_list = corpus_list[:number_of_files]
-    val_idx = int(len(corpus_list) * val_split) 
-    training_list = corpus_list[val_idx:]
-    validation_list = corpus_list[:val_idx]
+    val_idx = int(len(samples) * val_split) 
+    training_list = samples[val_idx:]
+    validation_list = samples[:val_idx]
     
     print ('Training with ' + str(len(training_list)) + ' and validating with ' + str(len(validation_list)))
     return {
-        "train": CTC_PriMuS(corpus_dirpath, training_list, rhythm_tokenizer_vocab, pitch_tokenizer_vocab, note_tokenizer_vocab, lift_tokenizer_vocab, distortions, config),
-        "validation": CTC_PriMuS(corpus_dirpath, validation_list, rhythm_tokenizer_vocab, pitch_tokenizer_vocab, note_tokenizer_vocab, lift_tokenizer_vocab, distortions, config),
+        "train": CTC_PriMuS(training_list, rhythm_tokenizer_vocab, pitch_tokenizer_vocab, note_tokenizer_vocab, lift_tokenizer_vocab, distortions, config),
+        "validation": CTC_PriMuS(validation_list, rhythm_tokenizer_vocab, pitch_tokenizer_vocab, note_tokenizer_vocab, lift_tokenizer_vocab, distortions, config),
     }
 
