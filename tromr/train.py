@@ -60,9 +60,11 @@ if not os.path.exists(grandstaff_train_index):
 if os.path.exists(os.path.join(git_root, "test_primus")):
     shutil.rmtree(os.path.join(git_root, "test_primus"))
 
+#train_index = mix_training_sets([primus_train_index, cpms_train_index, grandstaff_train_index], [0.5, 1.0, ] number_of_files)
+
 #datasets = load_primus(git_root, primus_train_index, vocabulary, default_config, val_split = 0.1, number_of_files=number_of_files)
-datasets = load_primus(git_root, cpms_train_index, vocabulary,  default_config, val_split = 0.1, number_of_files=number_of_files)
-#datasets = load_primus(git_root, grandstaff_train_index, vocabulary, default_config, val_split = 0.1, number_of_files=number_of_files)
+#datasets = load_primus(git_root, cpms_train_index, vocabulary,  default_config, val_split = 0.1, number_of_files=number_of_files)
+datasets = load_primus(git_root, grandstaff_train_index, vocabulary, default_config, val_split = 0.1, number_of_files=number_of_files)
     
 data_collator = DataCollator()
 

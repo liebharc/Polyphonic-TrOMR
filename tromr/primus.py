@@ -88,7 +88,8 @@ class CTC_PriMuS():
         samples.append(self.config.eos_token)
         samples.insert(0, self.config.bos_token)
         samples_padded = np.ones(self.config.max_seq_len, dtype=np.int32) * self.PAD_COLUMN
-        samples_padded[:len(samples)] = np.array(samples)
+        valid_len = min(self.config.max_seq_len, len(samples))
+        samples_padded[:valid_len] = np.array(samples[:valid_len])
         return samples_padded
     
     def _pad_samples(self, samples):
@@ -97,7 +98,8 @@ class CTC_PriMuS():
         samples.append(self.config.nonote_token)
         samples.insert(0, self.config.nonote_token)
         samples_padded = np.ones(self.config.max_seq_len, dtype=np.int32) * self.PAD_COLUMN
-        samples_padded[:len(samples)] = np.array(samples)
+        valid_len = min(self.config.max_seq_len, len(samples))
+        samples_padded[:valid_len] = np.array(samples[:valid_len])
         return samples_padded
     
     def _check_seq_values(self, seq, max_value):
