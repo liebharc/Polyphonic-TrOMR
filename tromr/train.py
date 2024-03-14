@@ -16,8 +16,6 @@ from convert_grandstaff import convert_grandstaff
 script_location = os.path.dirname(os.path.realpath(__file__))
 
 vocabulary = os.path.join(script_location, 'vocabulary_semantic.txt')
-rhythm_tokenizer = os.path.join(script_location, 'workspace', 'tokenizers', 'tokenizer_rhythm.json')
-pitch_tokenizer = os.path.join(script_location,  'workspace', 'tokenizers', 'tokenizer_pitch.json')
 git_root = os.path.join(script_location, '..')
 primus = os.path.join(git_root, 'Corpus')
 grandstaff = os.path.join(git_root, 'grandstaff')
@@ -62,9 +60,9 @@ if not os.path.exists(grandstaff_train_index):
 if os.path.exists(os.path.join(git_root, "test_primus")):
     shutil.rmtree(os.path.join(git_root, "test_primus"))
 
-#datasets = load_primus(git_root, primus_train_index, vocabulary, rhythm_tokenizer, pitch_tokenizer, default_config, val_split = 0.1, number_of_files=number_of_files)
-#datasets = load_primus(git_root, cpms_train_index, vocabulary, rhythm_tokenizer, pitch_tokenizer, default_config, val_split = 0.1, number_of_files=number_of_files)
-datasets = load_primus(git_root, grandstaff_train_index, vocabulary, rhythm_tokenizer, pitch_tokenizer, default_config, val_split = 0.1, number_of_files=number_of_files)
+#datasets = load_primus(git_root, primus_train_index, vocabulary, default_config, val_split = 0.1, number_of_files=number_of_files)
+datasets = load_primus(git_root, cpms_train_index, vocabulary,  default_config, val_split = 0.1, number_of_files=number_of_files)
+#datasets = load_primus(git_root, grandstaff_train_index, vocabulary, default_config, val_split = 0.1, number_of_files=number_of_files)
     
 data_collator = DataCollator()
 

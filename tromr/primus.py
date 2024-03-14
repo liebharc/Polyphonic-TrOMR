@@ -8,6 +8,9 @@ from typing import List
 
 import torch
 from configs import Config
+from split_merge_symbols import split_symbols
+
+script_location = os.path.dirname(os.path.realpath(__file__))
 
 os.environ["WANDB_DISABLED"] = "true"
 
@@ -18,10 +21,6 @@ def resize(image, height):
     width = int(float(height * image.shape[1]) / image.shape[0])
     sample_img = cv2.resize(image, (width, height))
     return sample_img
-
-
-def word_separator():
-    return '\t'
 
 
 def add_image_into_tr_omr_canvas(image: np.ndarray, margin_top: int, margin_bottom: int) -> np.ndarray:
@@ -66,60 +65,19 @@ class CTC_PriMuS():
     validation_dict = None
 
 
-    def __init__(self, corpus_dirpath, corpus_list, rhythm_vocab, pitch_vocab, distortions, config: Config):
+    def __init__(self, corpus_dirpath, corpus_list, rhythm_vocab, pitch_vocab, note_vocab, lift_vocab, distortions, config: Config):
         self.current_idx = 0
         self.distortions = distortions
         self.corpus_dirpath = corpus_dirpath
         self.corpus_list = corpus_list
         self.rhythm_vocab = rhythm_vocab
         self.pitch_vocab = pitch_vocab
+        self.note_vocab = note_vocab
+        self.lift_vocab = lift_vocab
         self.config = config
 
     def __len__(self):
         return len(self.corpus_list)
-    
-    def _translate_sample_to_rhythm(self, sample):
-        result = []
-        for word in sample:
-            if word in self.rhythm_vocab:
-                result.append(self.rhythm_vocab[word])
-        return result
-    
-    def _replace_accidentals(self, notename):
-        notename = notename.replace("#", "")
-        notename = notename.replace("b", "")
-        return notename
-    
-    def _translate_sample_to_pitch(self, sample):
-        result = []
-        for word in sample:
-            if word.startswith("note") or word.startswith("gracenote"):
-                without_duration = word.split("_")[0]
-                notename = without_duration.split("-")[1]
-                notename = self._replace_accidentals(notename)
-                notename = "note-" + notename
-                result.append(self.pitch_vocab[notename])
-            else:
-                result.append(self.config.nonote_token)
-        return result
-    
-    def _translate_sample_to_notes(self, sample):
-        result = []
-        for word in sample:
-            if word.startswith("note") or word.startswith("gracenote"):
-                result.append(1)
-            else:
-                result.append(self.config.nonote_token)
-        return result
-    
-    def _translate_notes_to_lifts(self, sample):
-        result = []
-        for word in sample:
-            if word == 1:
-                result.append(1)  # Hardcode to lift_null as we are not interested in lifts rights now
-            else:
-                result.append(self.config.nonote_token)
-        return result
     
     def _get_x_center_from_box(self, box):
         return (box[0][0] + box[1][0]) / 2.0
@@ -174,13 +132,15 @@ class CTC_PriMuS():
         sample_full_filepath = sample_fullpath + '.semantic'
         
         sample_gt_file = open(sample_full_filepath, 'r')
-        sample_gt_plain = sample_gt_file.readline().rstrip().split(word_separator())
+        sample_gt_plain = sample_gt_file.readline().rstrip()
         sample_gt_file.close()
 
-        rhythm = self._translate_sample_to_rhythm(sample_gt_plain)
-        notes = self._translate_sample_to_notes(sample_gt_plain)
-        lifts = self._translate_notes_to_lifts(notes)
-        pitch = self._translate_sample_to_pitch(sample_gt_plain)
+        liftsymbols, pitchsymbols, rhythmsymbols, note_symbols = split_symbols([sample_gt_plain])
+
+        rhythm = _translate_symbols(rhythmsymbols[0], self.rhythm_vocab, self.config.pad_token, 'rhythm')
+        lifts = _translate_symbols(liftsymbols[0], self.lift_vocab, self.config.nonote_token, 'lift')
+        pitch = _translate_symbols(pitchsymbols[0], self.pitch_vocab, self.config.nonote_token, 'pitch')
+        notes = _translate_symbols(note_symbols[0], self.note_vocab, self.config.nonote_token, 'note')
         mask = np.ones_like(image_norm).astype(np.bool_)
         return {
             'inputs': image_norm,
@@ -190,6 +150,16 @@ class CTC_PriMuS():
             'lifts_seq': self._check_seq_values(self._pad_samples(lifts), self.config.num_lift_tokens),
             'pitchs_seq': self._check_seq_values(self._pad_samples(pitch), self.config.num_pitch_tokens),
         }
+    
+def _translate_symbols(symbols, vocab, default_token, vocab_name):
+    result = []
+    for symbol in symbols:
+        if symbol in vocab:
+            result.append(vocab[symbol])
+        else:
+            print('Warning: ' + symbol + ' not in ' + vocab_name + ' vocabulary')
+            result.append(default_token)
+    return result
 
 
 class DataCollator:
@@ -234,24 +204,12 @@ def _translate_time_signature(note: str, tokenizer_vocab) -> str:
     return note
 
 
-def load_primus(corpus_dirpath, 
-                corpus_filepath, 
-                dictionary_path, 
-                rhythm_tokenizer_path, 
-                pitch_tokenizer_path,
-                config, 
-                distortions = False, 
-                val_split = 0.0, 
-                number_of_files = 10000):
-    # Corpus
-    corpus_file = open(corpus_filepath,'r')
-    corpus_list = corpus_file.read().splitlines()
-    corpus_file.close()
+rhythm_tokenizer_path = os.path.join(script_location, 'workspace', 'tokenizers', 'tokenizer_rhythm.json')
+pitch_tokenizer_path = os.path.join(script_location,  'workspace', 'tokenizers', 'tokenizer_pitch.json')
+note_tokenizer_path = os.path.join(script_location,  'workspace', 'tokenizers', 'tokenizer_note.json')
+lift_tokenizer_path = os.path.join(script_location,  'workspace', 'tokenizers', 'tokenizer_lift.json')
 
-    rhythm_tokenizer_config = json.load(open(rhythm_tokenizer_path,'r'))
-    pitch_tokenizer_config = json.load(open(pitch_tokenizer_path,'r'))
-    rhythm_tokenizer_vocab = rhythm_tokenizer_config['model']['vocab']
-    pitch_tokenizer_vocab = pitch_tokenizer_config['model']['vocab']
+def _create_vocabulary(dictionary_path, rhythm_tokenizer_vocab):
 
     # Dictionary, translate primus to the rhythm vocabulary
     rhythm_vocab = {}
@@ -271,6 +229,29 @@ def load_primus(corpus_dirpath,
             rhythm_vocab[word] = rhythm_tokenizer_vocab[vacab_word]
 
     dict_file.close()
+    return rhythm_vocab
+
+def load_primus(corpus_dirpath, 
+                corpus_filepath, 
+                dictionary_path, 
+                config, 
+                distortions = False, 
+                val_split = 0.0, 
+                number_of_files = 10000):
+    # Corpus
+    corpus_file = open(corpus_filepath,'r')
+    corpus_list = corpus_file.read().splitlines()
+    corpus_file.close()
+
+    rhythm_tokenizer_config = json.load(open(rhythm_tokenizer_path,'r'))
+    pitch_tokenizer_config = json.load(open(pitch_tokenizer_path,'r'))
+    note_tokenizer_config = json.load(open(note_tokenizer_path,'r'))
+    lift_tokenizer_config = json.load(open(lift_tokenizer_path,'r'))
+
+    rhythm_tokenizer_vocab = rhythm_tokenizer_config['model']['vocab']
+    pitch_tokenizer_vocab = pitch_tokenizer_config['model']['vocab']
+    note_tokenizer_vocab = note_tokenizer_config['model']['vocab']
+    lift_tokenizer_vocab = lift_tokenizer_config['model']['vocab']
     
     # Train and validation split
     random.shuffle(corpus_list) 
@@ -282,6 +263,7 @@ def load_primus(corpus_dirpath,
     
     print ('Training with ' + str(len(training_list)) + ' and validating with ' + str(len(validation_list)))
     return {
-        "train": CTC_PriMuS(corpus_dirpath, training_list, rhythm_vocab, pitch_tokenizer_vocab, distortions, config),
-        "validation": CTC_PriMuS(corpus_dirpath, validation_list, rhythm_vocab, pitch_tokenizer_vocab, distortions, config),
+        "train": CTC_PriMuS(corpus_dirpath, training_list, rhythm_tokenizer_vocab, pitch_tokenizer_vocab, note_tokenizer_vocab, lift_tokenizer_vocab, distortions, config),
+        "validation": CTC_PriMuS(corpus_dirpath, validation_list, rhythm_tokenizer_vocab, pitch_tokenizer_vocab, note_tokenizer_vocab, lift_tokenizer_vocab, distortions, config),
     }
+
