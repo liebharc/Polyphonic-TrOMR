@@ -9,6 +9,9 @@ from torchvision import transforms as tr
 from torchvision.transforms import Compose
 import PIL
 import xmltodict
+import tempfile
+
+from circle_of_fifths import KeyTransformation, get_circle_of_fifth_notes
 
 script_location = os.path.dirname(os.path.realpath(__file__))
 git_root = os.path.join(script_location, '..')
@@ -50,6 +53,15 @@ def _split_staff_image(path, basename):
     cv2.imwrite(basename + "_upper.jpg", upper)
     cv2.imwrite(basename + "_lower.jpg", lower)
     return _distort_image(basename + "_upper.jpg"), _distort_image(basename + "_lower.jpg")
+
+def _check_staff_image(path, basename):
+    """
+    This method helps with reprocessing a folder more quickly by skipping
+    the image splitting.
+    """
+    if not os.path.exists(basename + "_upper.jpg"):
+        return None, None
+    return basename + "_upper.jpg", basename + "_lower.jpg"
 
 def _distort_image(path):
     image = PIL.Image.open(path)
@@ -93,6 +105,7 @@ def _music_part_to_semantic(part):
         semantic = []
         for measure in _ensure_list(part["measure"]):
             chord = []
+            key = KeyTransformation(0)
             if "attributes" in measure:
                 for attribute in _ensure_list(measure["attributes"]):
                     if "clef" in attribute:
@@ -101,6 +114,7 @@ def _music_part_to_semantic(part):
                         semantic.append("timeSignature-" + attribute["time"]["beats"] + "/" + attribute["time"]["beat-type"])
                     if "key" in attribute:
                         semantic.append("keySignature-" + _circle_of_fifth_to_key_signature(int(attribute["key"]["fifths"])))
+                        key = KeyTransformation(int(attribute["key"]["fifths"]))
             if "note" in measure:
                 for note in  _ensure_list(measure["note"]):
                     if "rest" in note:
@@ -116,12 +130,15 @@ def _music_part_to_semantic(part):
                                 # FLush the previous chord
                                 semantic.append("|".join(chord))
                                 chord = []
-                        chord.append("note-" + note["pitch"]["step"] + _get_alter(note["pitch"]) + note["pitch"]["octave"] + "_" + _translate_duration(note["type"]) + _count_dots(note))
+                        key.add_accidental(note["pitch"]["step"], _get_alter(note["pitch"]))
+                        alter = _get_alter(note["pitch"])
+                        chord.append("note-" + note["pitch"]["step"] + alter + note["pitch"]["octave"] + "_" + _translate_duration(note["type"]) + _count_dots(note))
                         
             if len(chord) > 0:
                 # FLush the last chord
                 semantic.append("|".join(chord))
             semantic.append("barline")
+            key = key.reset_at_end_of_measure()
 
         # Remove the last bar line
         if len(semantic) > 0 and semantic[-1] == "barline":
@@ -171,14 +188,20 @@ def _get_alter(note):
         return "#"
     if note["alter"] == "-1":
         return "b"
+    if note["alter"] == "0":
+        return "0"
     return ""
 
-def convert_grandstaff():
-    if os.path.exists(grandstaff_train_index):
+def convert_grandstaff(ony_recreate_semantic_files: bool = False):
+    index_file = grandstaff_train_index
+    if ony_recreate_semantic_files:
+        index_file = tempfile.mktemp()
+
+    if os.path.exists(index_file):
         return
     
     print('Indexing Grandstaff dataset, this can take several hours')
-    with open(grandstaff_train_index, 'w') as f:
+    with open(index_file, 'w') as f:
         file_number = 0
         for path in Path(grandstaff_root).rglob('*.krn'):
             file_number += 1
@@ -193,7 +216,10 @@ def convert_grandstaff():
             if result != 0:
                 print(f"Failed to convert {path}")
                 continue
-            upper, lower = _split_staff_image(image_file, basename)
+            if ony_recreate_semantic_files:
+                upper, lower = _check_staff_image(image_file, basename)
+            else:
+                upper, lower = _split_staff_image(image_file, basename)
             if upper is None:
                 print(f"Failed to split {image_file}")
                 continue
@@ -206,4 +232,7 @@ def convert_grandstaff():
     print('Done indexing')
 
 if __name__ == "__main__":
-    convert_grandstaff()
+    ony_recreate_semantic_files = False
+    if "--only-semantic" in sys.argv:
+        ony_recreate_semantic_files = True
+    convert_grandstaff(ony_recreate_semantic_files)
