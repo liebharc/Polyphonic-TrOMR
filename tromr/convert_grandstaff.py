@@ -11,7 +11,7 @@ import PIL
 import xmltodict
 import tempfile
 
-from circle_of_fifths import KeyTransformation, get_circle_of_fifth_notes
+from circle_of_fifths import KeyTransformation, circle_of_fifth_to_key_signature
 
 script_location = os.path.dirname(os.path.realpath(__file__))
 git_root = os.path.join(script_location, '..')
@@ -113,7 +113,7 @@ def _music_part_to_semantic(part):
                     if "time" in attribute:
                         semantic.append("timeSignature-" + attribute["time"]["beats"] + "/" + attribute["time"]["beat-type"])
                     if "key" in attribute:
-                        semantic.append("keySignature-" + _circle_of_fifth_to_key_signature(int(attribute["key"]["fifths"])))
+                        semantic.append("keySignature-" + circle_of_fifth_to_key_signature(int(attribute["key"]["fifths"])))
                         key = KeyTransformation(int(attribute["key"]["fifths"]))
             if "note" in measure:
                 for note in  _ensure_list(measure["note"]):
@@ -147,26 +147,6 @@ def _music_part_to_semantic(part):
     except Exception as e:
         print("Failure at ", part)
         raise e
-
-def _circle_of_fifth_to_key_signature(circle):
-    definition = {
-        -7: "CbM",
-        -6: "GbM",
-        -5: "DbM",
-        -4: "AbM",
-        -3: "EbM",
-        -2: "BbM",
-        -1: "FM",
-        0: "CM",
-        1: "GM",
-        2: "DM",
-        3: "AM",
-        4: "EM",
-        5: "BM",
-        6: "F#M",
-        7: "C#M",
-    }
-    return definition[circle]
 
 def _translate_duration(duration):
     definition = {

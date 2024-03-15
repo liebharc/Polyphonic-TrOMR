@@ -22,5 +22,16 @@ class TestMergeSymbols(unittest.TestCase):
         self.assertEqual(actualpitch, predpitch)
         self.assertEqual(actualnotes, prednotes)
 
+    def test_split_restores_accidentals(self):
+        """
+        The semantic encoding doesn't tell us which accidentals are present in the image. The best we can do is to restore
+        this information from the lift symbols and the key information.
+        """
+
+        merged_accidentals = ["clef-G2 keySignature-FM timeSignature-4/4 rest-sixteenth note-A3_sixteenth note-C4_sixteenth note-F4_sixteenth note-A4_sixteenth note-C4_sixteenth note-F4_sixteenth rest-sixteenth note-A3_sixteenth note-A3_sixteenth note-C4_sixteenth note-F4_sixteenth note-A4_sixteenth note-C4_sixteenth note-F4_sixteenth rest-sixteenth note-A3_sixteenth rest-sixteenth note-A3_quarter.. note-A3_quarter.. barline rest-sixteenth note-C4_sixteenth note-Eb4_sixteenth note-F4_sixteenth note-C5_sixteenth note-Eb4_sixteenth note-F4_sixteenth rest-sixteenth note-C4_sixteenth note-C4_sixteenth note-D4_sixteenth note-F#4_sixteenth note-C5_sixteenth note-D4_sixteenth note-F#4_sixteenth rest-sixteenth note-C4_sixteenth rest-sixteenth note-C4_quarter.. note-C4_quarter.. barline rest-sixteenth note-C4_sixteenth note-D4_sixteenth note-A4_sixteenth note-C5_sixteenth note-D4_sixteenth note-A4_sixteenth rest-sixteenth note-C4_sixteenth note-Bb3_sixteenth note-D4_sixteenth note-G4_sixteenth note-Bb4_sixteenth note-D4_sixteenth note-G4_sixteenth rest-sixteenth note-Bb3_sixteenth rest-sixteenth note-C4_quarter.. note-Bb3_quarter.. "]
+        actuallift, actualpitch, _actualrhythm, _actualnotes = split_symbols(merged_accidentals)
+        actuallift = [actualpitch[0][i] + l for i, l in enumerate(actuallift[0]) if l != "nonote" and l != "lift_null"]
+        self.assertEqual(actuallift, ['note-E4lift_b', 'note-F4lift_#'])
+
 if __name__ == '__main__':
     unittest.main()        

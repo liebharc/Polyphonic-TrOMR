@@ -1,5 +1,7 @@
 import re
 
+from circle_of_fifths import KeyTransformation, key_signature_to_circle_of_fifth
+
 def merge_symbols(predrhythms, predpitchs, predlifts):
     merges = []
     for i in range(len(predrhythms)):
@@ -21,22 +23,30 @@ def merge_symbols(predrhythms, predpitchs, predlifts):
         merges.append(merge[:-1])
     return merges
 
-def _symbol_to_lift(symbol):
-    # TODO this is incorrect as the semantic encoding handles accidentals differently
+def _get_alter(symbol):
     if symbol.startswith("note") or symbol.startswith("gracenote"):
         if "##" in symbol:
-            return "lift_##"
+            return "#"  # We have no support for double accidentals right now
         elif "#" in symbol:
-            return "lift_#"
+            return "#"
         elif "bb" in symbol:
-            return "lift_bb"
+            return "b"  # We have no support for double accidentals right now
         elif "b" in symbol:
-            return "lift_b"
+            return "b"
+        return ""
+    return None
+
+def _alter_to_lift(symbol):
+    if symbol == "#":
+        return "lift_#"
+    elif symbol == "b":
+        return "lift_b"
+    elif symbol == "0":
+        return "lift_N"
+    else:
         return "lift_null"
-    return "nonote"
     
 def _replace_accidentals( notename):
-    # TODO this is incorrect as the semantic encoding handles accidentals differently
     notename = notename.replace("#", "")
     notename = notename.replace("b", "")
     return notename
@@ -96,8 +106,12 @@ def split_symbols(merged):
         predpitch = []
         predrhythm = []
         prednote = []
+        key = KeyTransformation(0)
         for symbols in re.split("\s+", merged[line]):
             for symbol in re.split("(\|)", symbols):
+                if symbol.startswith("keySignature"):
+                    key = KeyTransformation(key_signature_to_circle_of_fifth(symbol.split("-")[-1]))
+
                 if symbol == "tie":
                     continue
                 elif symbol == "|":
@@ -106,10 +120,17 @@ def split_symbols(merged):
                     predlift.append("nonote")
                     prednote.append("nonote")
                 else:
-                    predpitch.append(_symbol_to_pitch(symbol))
-                    predlift.append(_symbol_to_lift(symbol))
+                    pitch = _symbol_to_pitch(symbol)
+                    predpitch.append(pitch)
                     predrhythm.append(_symbol_to_rhythm(symbol))
                     prednote.append(_symbol_to_note(symbol))
+                    alter = _get_alter(symbol)
+                    if alter is not None:
+                        note_name = pitch[5]
+                        alter = key.add_accidental(note_name, alter)
+                        predlift.append(_alter_to_lift(alter))
+                    else:
+                        predlift.append("nonote")
         predlifts.append(predlift)
         predpitchs.append(predpitch)
         predrhythms.append(predrhythm)
