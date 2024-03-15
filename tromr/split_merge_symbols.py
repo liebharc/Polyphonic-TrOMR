@@ -74,6 +74,7 @@ def _translate_duration(duration):
     duration = duration.replace("quadruple", "breve")
     duration = duration.replace("thirty", "thirty_second")
     duration = duration.replace("sixty", "sixty_fourth")
+    duration = duration.replace("hundred", "hundred_twenty_eighth")
     duration = duration.replace(".", "")  # We add dots later again
     return duration
 
@@ -85,10 +86,12 @@ def _symbol_to_rhythm(symbol):
     symbol = symbol.replace("rest-quadruple_whole", "multirest-2")
     symbol = symbol.replace("rest-whole0", "rest-whole")
     symbol = symbol.replace("_fermata", "")
+    duration = duration.replace(".", "")  # We add dots later again
     if re.match(r"rest-whole(\d+)", symbol) or re.match(r"multirest-(\d+)", symbol):
         return "multirest-2"  # Some multirests don't exist in the rhtythm tokenizer, for now it's good enough to just recognize them as any multirest
     symbol = symbol.replace("timeSignature-2/3", "timeSignature-2/4")
-    return symbol
+    symbol = symbol.replace("timeSignature-3/6", "timeSignature-3/8")
+    return symbol + _add_dots(symbol)
 
 
 def _symbol_to_note(symbol):
@@ -111,6 +114,8 @@ def split_symbols(merged):
             for symbol in re.split("(\|)", symbols):
                 if symbol.startswith("keySignature"):
                     key = KeyTransformation(key_signature_to_circle_of_fifth(symbol.split("-")[-1]))
+                if symbol == "barline":
+                    key = key.reset_at_end_of_measure()
 
                 if symbol == "tie":
                     continue
