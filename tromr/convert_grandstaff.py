@@ -121,6 +121,11 @@ def _music_part_to_semantic(part):
             if len(chord) > 0:
                 # FLush the last chord
                 semantic.append("|".join(chord))
+            semantic.append("barline")
+
+        # Remove the last bar line
+        if len(semantic) > 0 and semantic[-1] == "barline":
+            semantic.pop()
         return semantic
     except Exception as e:
         print("Failure at ", part)
