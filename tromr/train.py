@@ -12,6 +12,7 @@ from primus import CTC_PriMuS, load_primus, DataCollator
 from model.tromr_arch import TrOMR
 from configs import default_config
 from convert_grandstaff import convert_grandstaff
+from mix_datasets import mix_training_sets
 
 script_location = os.path.dirname(os.path.realpath(__file__))
 
@@ -26,8 +27,8 @@ grandstaff_train_index = os.path.join(grandstaff, 'index.txt')
 
 tr_omr_pretrained = os.path.join(script_location, 'workspace', 'checkpoints', 'img2score_epoch47.pth')
 
-number_of_files = 10000
-number_of_epochs = 5
+number_of_files = 40000
+number_of_epochs = 20
 
 def index_primus_dataset():
     print('Indexing Primus dataset')
@@ -64,11 +65,14 @@ def load_training_index(file_path: str):
     with open(file_path, 'r') as f:
         return f.readlines()
 
-#train_index = mix_training_sets([primus_train_index, cpms_train_index, grandstaff_train_index], [0.5, 1.0, ] number_of_files)
+    
+def load_and_mix_training_sets(index_paths: List[str], weights: List[float], number_of_files: int):
+    data_sources = [load_training_index(index) for index in index_paths]
+    return mix_training_sets(data_sources, weights, number_of_files)
 
-#datasets = load_primus(load_training_index(primus_train_index), vocabulary, default_config, val_split = 0.1)
-#datasets = load_primus(load_training_index(cpms_train_index), vocabulary,  default_config, val_split = 0.1)
-datasets = load_primus(load_training_index(grandstaff_train_index), default_config, val_split = 0.1)
+train_index = load_and_mix_training_sets([primus_train_index, cpms_train_index, grandstaff_train_index], [1.0, 1.0, 1.0], number_of_files)
+
+datasets = load_primus(train_index, default_config, val_split = 0.1)
     
 data_collator = DataCollator()
 
