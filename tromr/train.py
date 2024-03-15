@@ -73,7 +73,7 @@ def load_and_mix_training_sets(index_paths: List[str], weights: List[float], num
 
 train_index = load_and_mix_training_sets([primus_train_index, cpms_train_index, grandstaff_train_index], [1.0, 1.0, 1.0], number_of_files)
 
-datasets = load_primus(train_index, default_config, val_split = 0.1)
+datasets = load_primus(train_index, default_config, val_split = 0.1, distortions=True)
     
 data_collator = DataCollator()
 
