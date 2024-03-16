@@ -48,11 +48,25 @@ def _split_staff_image(path, basename):
     if len(centers) != 10:
         return None, None
     middle = np.int32(np.round((centers[4] + centers[5]) / 2))
-    upper = image[:middle]
-    lower = image[middle:]
+    upper = _center_image(image[:middle], centers[2] + _random_center_offset())
+    lower = _center_image(image[middle:], centers[7] - middle + _random_center_offset())
     cv2.imwrite(basename + "_upper.jpg", upper)
     cv2.imwrite(basename + "_lower.jpg", lower)
     return _distort_image(basename + "_upper.jpg"), _distort_image(basename + "_lower.jpg")
+
+def _random_center_offset():
+    return np.random.randint(-20, 20)
+
+def _center_image(image, center):
+    """
+    Creates a new image so that the y coordinate in center is at the vertical center of the new image.
+    """
+    new_image = np.zeros((image.shape[0], image.shape[1], 3), dtype=np.uint8)
+    new_center = np.int32(np.round(new_image.shape[0] / 2))
+    offset = new_center - center
+    new_image[offset:offset+image.shape[0]] = image
+    return new_image
+
 
 def _check_staff_image(path, basename):
     """
