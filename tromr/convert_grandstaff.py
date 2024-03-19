@@ -43,6 +43,9 @@ def _split_staff_image(path, basename):
     """
     image = cv2.imread(path)
     dark_pixels_per_row = _get_dark_pixels_per_row(image)
+    upper_bound, lower_bound = _get_image_bounds(dark_pixels_per_row)
+    image = image[upper_bound:-lower_bound]
+    dark_pixels_per_row = dark_pixels_per_row[upper_bound:-lower_bound]
     norm = (dark_pixels_per_row - np.mean(dark_pixels_per_row)) / np.std(dark_pixels_per_row)
     centers, _ = find_peaks(norm, height=2.5, distance=5, prominence=1)
     if len(centers) != 10:
@@ -61,12 +64,24 @@ def _center_image(image, center):
     """
     Creates a new image so that the y coordinate in center is at the vertical center of the new image.
     """
-    new_image = np.zeros((image.shape[0], image.shape[1], 3), dtype=np.uint8)
-    new_center = np.int32(np.round(new_image.shape[0] / 2))
+    new_center = np.int32(np.round(image.shape[0] / 2))
     offset = new_center - center
-    new_image[offset:offset+image.shape[0]] = image
+    new_image = 255 * np.ones((image.shape[0] + abs(offset), image.shape[1], 3), dtype=np.uint8)
+    new_image[max(offset, 0):max(offset, 0)+image.shape[0]] = image
     return new_image
 
+def _get_image_bounds(dark_pixels_per_row):
+    white_upper_area_size = 0
+    for i in range(dark_pixels_per_row.shape[0]):
+        if dark_pixels_per_row[i] > 0:
+            break
+        white_upper_area_size += 1
+    white_lower_area_size = 0
+    for i in range(dark_pixels_per_row.shape[0] - 1, -1, -1):
+        if dark_pixels_per_row[i] > 0:
+            break
+        white_lower_area_size += 1
+    return white_upper_area_size, white_lower_area_size
 
 def _check_staff_image(path, basename):
     """
@@ -80,8 +95,8 @@ def _check_staff_image(path, basename):
 def _distort_image(path):
     image = PIL.Image.open(path)
     pipeline = Compose(
-             [tr.RandomRotation(degrees = 2),
-              tr.RandomPerspective(0.1),
+             [tr.RandomRotation(degrees = 1),
+              tr.RandomPerspective(0.05),
               tr.RandomAdjustSharpness(2),])
 
     augmented_image = pipeline(img = image)
