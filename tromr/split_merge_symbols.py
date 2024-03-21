@@ -86,11 +86,12 @@ def _symbol_to_rhythm(symbol):
     symbol = symbol.replace("rest-quadruple_whole", "multirest-2")
     symbol = symbol.replace("rest-whole0", "rest-whole")
     symbol = symbol.replace("_fermata", "")
-    duration = duration.replace(".", "")  # We add dots later again
+    symbol = symbol.replace(".", "")  # We add dots later again
     if re.match(r"rest-whole(\d+)", symbol) or re.match(r"multirest-(\d+)", symbol):
         return "multirest-2"  # Some multirests don't exist in the rhtythm tokenizer, for now it's good enough to just recognize them as any multirest
     symbol = symbol.replace("timeSignature-2/3", "timeSignature-2/4")
     symbol = symbol.replace("timeSignature-3/6", "timeSignature-3/8")
+    symbol = symbol.replace("timeSignature-8/12", "timeSignature-8/16")
     return symbol + _add_dots(symbol)
 
 

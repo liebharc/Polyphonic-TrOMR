@@ -10,8 +10,10 @@ from torchvision.transforms import Compose
 import PIL
 import xmltodict
 import tempfile
+import multiprocessing
 
 from circle_of_fifths import KeyTransformation, circle_of_fifth_to_key_signature
+from image_processing import add_image_into_tr_omr_canvas
 
 script_location = os.path.dirname(os.path.realpath(__file__))
 git_root = os.path.join(script_location, '..')
@@ -47,15 +49,19 @@ def _split_staff_image(path, basename):
     image = image[upper_bound:-lower_bound]
     dark_pixels_per_row = dark_pixels_per_row[upper_bound:-lower_bound]
     norm = (dark_pixels_per_row - np.mean(dark_pixels_per_row)) / np.std(dark_pixels_per_row)
-    centers, _ = find_peaks(norm, height=2.5, distance=5, prominence=1)
+    centers, _ = find_peaks(norm, height=1.4, distance=3, prominence=1)
     if len(centers) != 10:
+        print(f"INFO: Failed to split {path}, found {len(centers)} centers")
         return None, None
     middle = np.int32(np.round((centers[4] + centers[5]) / 2))
-    upper = _center_image(image[:middle], centers[2] + _random_center_offset())
-    lower = _center_image(image[middle:], centers[7] - middle + _random_center_offset())
-    cv2.imwrite(basename + "_upper.jpg", upper)
-    cv2.imwrite(basename + "_lower.jpg", lower)
-    return _distort_image(basename + "_upper.jpg"), _distort_image(basename + "_lower.jpg")
+    if middle < 15 or middle > image.shape[0] - 15:
+        print(f"INFO: Failed to split {path}, middle is at {middle}")
+        return None, None
+    upper = _prepare_image(_center_image(image[:middle], centers[2] + _random_center_offset()))
+    lower = _prepare_image(_center_image(image[middle:], centers[7] - middle + _random_center_offset()))
+    cv2.imwrite(basename + "_upper-pre.jpg", upper)
+    cv2.imwrite(basename + "_lower-pre.jpg", lower)
+    return _distort_image(basename + "_upper-pre.jpg"), _distort_image(basename + "_lower-pre.jpg")
 
 def _random_center_offset():
     return np.random.randint(-20, 20)
@@ -69,6 +75,9 @@ def _center_image(image, center):
     new_image = 255 * np.ones((image.shape[0] + abs(offset), image.shape[1], 3), dtype=np.uint8)
     new_image[max(offset, 0):max(offset, 0)+image.shape[0]] = image
     return new_image
+
+def _prepare_image(image):
+    return add_image_into_tr_omr_canvas(image)
 
 def _get_image_bounds(dark_pixels_per_row):
     white_upper_area_size = 0
@@ -89,6 +98,7 @@ def _check_staff_image(path, basename):
     the image splitting.
     """
     if not os.path.exists(basename + "_upper.jpg"):
+        print(f"INFO: Failed to split {path}")
         return None, None
     return basename + "_upper.jpg", basename + "_lower.jpg"
 
@@ -201,43 +211,51 @@ def _get_alter(note):
         return "0"
     return ""
 
+def _convert_file(path: Path, ony_recreate_semantic_files = False):
+    basename = str(path).replace(".krn", "")
+    image_file = str(path).replace(".krn", ".jpg")
+    distored = str(path).replace(".krn", "_distorted.jpg")
+    musicxml = str(path).replace(".krn", ".musicxml")
+    semantic = str(path).replace(".krn", ".semantic")
+    result = os.system(f"{hum2xml} {path} > {musicxml}")
+    if result != 0:
+        print(f"Failed to convert {path}")
+        return []
+    if ony_recreate_semantic_files:
+        upper, lower = _check_staff_image(image_file, basename)
+    else:
+        upper, lower = _split_staff_image(image_file, basename)
+    if upper is None:
+        return []
+    upper_semantic, lower_semantic = _music_xml_to_semantic(musicxml, basename)
+    if upper_semantic is None:
+        print(f"Failed to convert {musicxml}")
+        return []
+    return [
+        str(Path(upper).relative_to(git_root)) + "," + str(Path(upper_semantic).relative_to(git_root)),
+        str(Path(lower).relative_to(git_root)) + "," + str(Path(lower_semantic).relative_to(git_root)),
+    ]
+
+def _convert_file_only_semantic(path):
+    return _convert_file(path, True)
+
 def convert_grandstaff(ony_recreate_semantic_files: bool = False):
     index_file = grandstaff_train_index
     if ony_recreate_semantic_files:
         index_file = tempfile.mktemp()
-
-    if os.path.exists(index_file):
-        return
     
     print('Indexing Grandstaff dataset, this can take several hours')
     with open(index_file, 'w') as f:
         file_number = 0
-        for path in Path(grandstaff_root).rglob('*.krn'):
-            file_number += 1
-            if file_number % 1000 == 0:
-                print(f"Processed {file_number} files")
-            basename = str(path).replace(".krn", "")
-            image_file = str(path).replace(".krn", ".jpg")
-            distored = str(path).replace(".krn", "_distorted.jpg")
-            musicxml = str(path).replace(".krn", ".musicxml")
-            semantic = str(path).replace(".krn", ".semantic")
-            result = os.system(f"{hum2xml} {path} > {musicxml}")
-            if result != 0:
-                print(f"Failed to convert {path}")
-                continue
-            if ony_recreate_semantic_files:
-                upper, lower = _check_staff_image(image_file, basename)
-            else:
-                upper, lower = _split_staff_image(image_file, basename)
-            if upper is None:
-                print(f"Failed to split {image_file}")
-                continue
-            upper_semantic, lower_semantic =_music_xml_to_semantic(musicxml, basename)
-            if upper_semantic is None:
-                print(f"Failed to convert {musicxml}")
-                continue
-            f.write(str(Path(upper).relative_to(git_root)) + '\n')
-            f.write(str(Path(lower).relative_to(git_root)) + '\n')
+        multiprocessing.set_start_method('spawn')
+        with multiprocessing.Pool() as p:
+            for result in p.imap_unordered(_convert_file_only_semantic if ony_recreate_semantic_files else _convert_file, Path(grandstaff_root).rglob('*.krn')):
+                if len(result) > 0:
+                    f.write(result[0] + '\n')
+                    f.write(result[1] + '\n')
+                file_number += 1
+                if file_number % 1000 == 0:
+                    print(f"Processed {file_number} files")        
     print('Done indexing')
 
 if __name__ == "__main__":

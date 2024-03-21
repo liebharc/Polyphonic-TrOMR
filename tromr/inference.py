@@ -21,12 +21,7 @@ class Inference:
 
     def predict(self, filepath: str):
         predrhythms, predpitchs, predlifts = self.handler.predict(filepath)
-        print(predrhythms)
-        print(len(predrhythms[0]), len(predpitchs[0]), len(predlifts[0]))
-        print([p for p in predlifts[0] if p != "lift_null" and p != "nonote"])
-        print([p for p in predpitchs[0] if p != "lift_null" and p != "nonote"])
-    
-        merged = merge_symbols(predrhythms[0], predpitchs[0], predlifts[0])
+        merged = merge_symbols(predrhythms, predpitchs, predlifts)
         return merged, predrhythms
     
 if __name__ == '__main__':

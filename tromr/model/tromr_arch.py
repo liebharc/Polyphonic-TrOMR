@@ -16,7 +16,6 @@ class TrOMR(nn.Module):
 
     def forward(self, inputs, rhythms_seq, pitchs_seq, 
                 lifts_seq, note_seq, mask, **kwargs):
-        mask = None
         encoded = self.encoder(inputs)
         loss = self.decoder(rhythms_seq, pitchs_seq, 
                             lifts_seq, note_seq, 
