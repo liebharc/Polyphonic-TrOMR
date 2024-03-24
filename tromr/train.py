@@ -50,8 +50,8 @@ git_root = os.path.join(script_location, '..')
 
 tr_omr_pretrained = os.path.join(script_location, 'workspace', 'checkpoints', 'img2score_epoch47.pth')
 
-number_of_files = 10000
-number_of_epochs = 10
+number_of_files = -1
+number_of_epochs = 40
 
 parser = argparse.ArgumentParser(
                 prog='train.py',
@@ -116,7 +116,6 @@ if args.pretrained:
     model.load_state_dict(torch.load(tr_omr_pretrained), strict=False)
 else:
     model = TrOMR(default_config)
-
 
 timestamp = str(round(time.time()))
 try:

@@ -92,6 +92,7 @@ def _symbol_to_rhythm(symbol):
     symbol = symbol.replace("timeSignature-2/3", "timeSignature-2/4")
     symbol = symbol.replace("timeSignature-3/6", "timeSignature-3/8")
     symbol = symbol.replace("timeSignature-8/12", "timeSignature-8/16")
+    symbol = symbol.replace("timeSignature-2/48", "timeSignature-2/32")
     return symbol + _add_dots(symbol)
 
 

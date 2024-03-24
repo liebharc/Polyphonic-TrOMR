@@ -173,7 +173,7 @@ class ScoreDecoder(nn.Module):
         loss_lift = F.cross_entropy(liftsp.transpose(1, 2), liftso, ignore_index = self.ignore_index)
         loss_note = F.cross_entropy(notesp.transpose(1, 2), noteso, ignore_index = self.ignore_index)
         # From the TR OMR paper equation 2, we use however different values for alpha and beta
-        alpha = 0.3
+        alpha = 0.4
         beta = 1 - alpha
         loss = alpha * (loss_rhythm + loss_pitch + loss_lift + loss_note) + beta * loss_consist
         
