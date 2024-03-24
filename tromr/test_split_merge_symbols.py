@@ -33,5 +33,10 @@ class TestMergeSymbols(unittest.TestCase):
         actuallift = [actualpitch[0][i] + l for i, l in enumerate(actuallift[0]) if l != "nonote" and l != "lift_null"]
         self.assertEqual(actuallift, ['note-E4lift_b', 'note-F4lift_#'])
 
+    def test_replace_multirests(self):
+        merged_multirests = ["multirest-1 multirest-2 multirest-3 multirest-50 multirest-100 rest-whole2"]
+        _actuallift, _actualpitch, actualrhythm, _actualnotes = split_symbols(merged_multirests)
+        self.assertEqual(actualrhythm, [['rest-whole', 'multirest-2', 'multirest-3', 'multirest-50', 'multirest-50', 'multirest-2']])
+
 if __name__ == '__main__':
     unittest.main()        
