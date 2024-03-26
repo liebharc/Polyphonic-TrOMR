@@ -9,10 +9,10 @@ from model import TrOMR
 from configs import Config
 from image_processing import readimg
 
-checkpoint_file_path = os.path.join(os.path.dirname(__file__), "workspace", "checkpoints", "img2score_epoch47.pth")
+default_checkpoint_file_path = os.path.join(os.path.dirname(__file__), "workspace", "checkpoints", "img2score_epoch47.pth")
 
 class Staff2Score(object):
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, checkpoint_file_path = default_checkpoint_file_path):
         self.config = config
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = TrOMR(config)
