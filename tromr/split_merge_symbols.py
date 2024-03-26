@@ -106,6 +106,54 @@ def _symbol_to_note(symbol):
         return "note"
     return "nonote"
 
+def _note_name_to_sortable(note_name):
+    if note_name == "C":
+        return 0
+    if note_name == "D":
+        return 1
+    if note_name == "E":
+        return 2
+    if note_name == "F":
+        return 3
+    if note_name == "G":
+        return 4
+    if note_name == "A":
+        return 5
+    if note_name == "B":
+        return 6
+    return 7
+
+def _note_name_and_octave_to_sortable(note_name_with_octave):
+    note_name = note_name_with_octave[:-1]
+    octave = int(note_name_with_octave[-1])
+    return _note_name_to_sortable(note_name) + octave * 7
+
+def _pitch_name_to_sortable(pitch_name):
+    note_name = pitch_name.split("-")[-1]
+    return _note_name_and_octave_to_sortable(note_name)
+
+def _sort_by_pitch(lifts, pitches, rhythms, notes):
+    lifts = lifts.copy()
+    pitches = pitches.copy()
+    rhythms = rhythms.copy()
+    notes = notes.copy()
+
+    def swap(i, j):
+        lifts[i], lifts[j] = lifts[j], lifts[i]
+        pitches[i], pitches[j] = pitches[j], pitches[i]
+        rhythms[i], rhythms[j] = rhythms[j], rhythms[i]
+        notes[i], notes[j] = notes[j], notes[i]
+
+    for i in range(len(pitches)):
+        if pitches[i] == "nonote":
+            continue
+        for j in range(i+1, len(pitches)):
+            if pitches[j] == "nonote":
+                continue
+            if _pitch_name_to_sortable(pitches[i]) < _pitch_name_to_sortable(pitches[j]):
+                swap(i, j)
+    return lifts, pitches, rhythms, notes
+
 def split_symbols(merged):
     predlifts = []
     predpitchs = []
@@ -118,6 +166,10 @@ def split_symbols(merged):
         prednote = []
         key = KeyTransformation(0)
         for symbols in re.split("\s+", merged[line]):
+            symbollift = []
+            symbolpitch = []
+            symbolrhythm = []
+            symbolnote = []
             for symbol in re.split("(\|)", symbols):
                 if symbol.startswith("keySignature"):
                     key = KeyTransformation(key_signature_to_circle_of_fifth(symbol.split("-")[-1]))
@@ -127,22 +179,28 @@ def split_symbols(merged):
                 if symbol == "tie":
                     continue
                 elif symbol == "|":
-                    predrhythm.append("|")
-                    predpitch.append("nonote")
-                    predlift.append("nonote")
-                    prednote.append("nonote")
+                    symbolrhythm.append("|")
+                    symbolpitch.append("nonote")
+                    symbollift.append("nonote")
+                    symbolnote.append("nonote")
                 else:
                     pitch = _symbol_to_pitch(symbol)
-                    predpitch.append(pitch)
-                    predrhythm.append(_symbol_to_rhythm(symbol))
-                    prednote.append(_symbol_to_note(symbol))
+                    symbolpitch.append(pitch)
+                    symbolrhythm.append(_symbol_to_rhythm(symbol))
+                    symbolnote.append(_symbol_to_note(symbol))
                     alter = _get_alter(symbol)
                     if alter is not None:
                         note_name = pitch[5]
                         alter = key.add_accidental(note_name, alter)
-                        predlift.append(_alter_to_lift(alter))
+                        symbollift.append(_alter_to_lift(alter))
                     else:
-                        predlift.append("nonote")
+                        symbollift.append("nonote")
+            if len(symbolpitch) > 0:
+                symbollift, symbolpitch, symbolrhythm, symbolnote = _sort_by_pitch(symbollift, symbolpitch, symbolrhythm, symbolnote)
+                predpitch += symbolpitch
+                predrhythm += symbolrhythm
+                prednote += symbolnote
+                predlift += symbollift
         predlifts.append(predlift)
         predpitchs.append(predpitch)
         predrhythms.append(predrhythm)

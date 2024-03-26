@@ -70,6 +70,30 @@ class DataLoader():
                 raise Exception('ERROR: ' + str(value) + ' not in range of 0 to ' + str(max_value) + '!')
         return seq
     
+    def _check_index(self, idx):
+        try:
+            self[idx]
+            return True
+        except Exception as e:
+            print('ERROR: ' + str(e))
+            return False
+    
+    def check(self):
+        """
+        Loads every entry to check if the files are available
+        and can be loaded correctly.
+        """
+        has_errors = False
+        i = 0
+        
+        for i in range(len(self)):
+            result = self._check_index(i)
+            has_errors = has_errors or not result
+            i += 1
+            if i % 10000 == 0:
+                print('Checked ' + str(i) + '/' + str(len(self)) + ' entries')
+        return has_errors
+    
     def __getitem__(self, idx):
         entry = self.corpus_list[idx].strip()
         sample_filepath = entry.split(",")[0]
@@ -138,6 +162,8 @@ def load_dataset(samples,
     print ('Training with ' + str(len(training_list)) + ' and validating with ' + str(len(validation_list)))
     return {
         "train": DataLoader(training_list, rhythm_tokenizer_vocab, pitch_tokenizer_vocab, note_tokenizer_vocab, lift_tokenizer_vocab, config),
+        "train_list": training_list,
         "validation": DataLoader(validation_list, rhythm_tokenizer_vocab, pitch_tokenizer_vocab, note_tokenizer_vocab, lift_tokenizer_vocab, config),
+        "validation_list": validation_list
     }
 

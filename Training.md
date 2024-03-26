@@ -11,7 +11,7 @@
 
 Date: 24 Mar 2024
 Training time: ~24h (fast option)
-Commit: 74adcbc396b462c77ad8d1fd8f4f3c6a01b5836e
+Commit: 516093a3f3841235a06ca8de6759f1db6b8fc39a
 Result:
 
 ```
