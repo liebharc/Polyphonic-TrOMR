@@ -63,7 +63,6 @@ class ScoreTransformerWrapper(nn.Module):
         x = self.rhythm_emb(rhythms) + self.pitch_emb(pitchs) + self.lift_emb(lifts) + self.pos_emb(rhythms)
         x = self.project_emb(x)
         x, hiddens = self.attn_layers(x, mask = mask, return_hiddens = return_hiddens, **kwargs)
-        select_hiddens = hiddens[0][3]
         
         x = self.norm(x)
 
