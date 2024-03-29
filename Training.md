@@ -3,6 +3,7 @@
 - Optional: Install [NVidia Apex](https://github.com/NVIDIA/apex) - only needed if the `--fast` option is used during training
 - Download and unpack [Camera-PrIMus](https://grfia.dlsi.ua.es/primus/) to `$gitroot/Corpus`
 - Download and unpack [GrandStaff](https://sites.google.com/view/multiscore-project/datasets) to `$gitroot/grandstaff`
+- Clone [CPMS](https://github.com/itec-hust/CPMS) to `$gitroot/CPMS`
 - Make sure you have installed pytorch and CUDA correctly
 
 ## Train log
