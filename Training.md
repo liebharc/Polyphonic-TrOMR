@@ -12,6 +12,7 @@
 Date: 24 Mar 2024
 Training time: ~24h (fast option)
 Commit: 516093a3f3841235a06ca8de6759f1db6b8fc39a
+SER: 82%
 Result:
 
 ```
@@ -22,3 +23,6 @@ Result:
 ### Run 0
 
 The weights from the [original paper](https://arxiv.org/abs/2308.09370).
+SER\*: 74%
+
+- SER failues shown here should be taken with a grain of salt

@@ -1,11 +1,10 @@
 timm==0.9.16
-omegaconf==2.3.0
 transformers==4.39.1
 opencv-python-headless==4.9.0.80
 x-transformers==1.27.19
-albumentations==1.2.0
+albumentations==1.4.0
 torch==2.2.1
-einops==0.4.1
+einops==0.7.0
 numpy==1.26.3
 scipy==1.12.0
 matplotlib==3.8.0rc1
