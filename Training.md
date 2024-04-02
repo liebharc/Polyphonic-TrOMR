@@ -8,6 +8,13 @@
 
 ## Train log
 
+### Run2
+
+Date: 01 Apr 2024
+Training time: ~48h
+Commit: 516093a3f3840cb82922b4d7300d1568455277d568f85ea96fe41235a06ca8de6759f1db6b8fc39a
+SER: 79%
+
 ### Run1
 
 Date: 24 Mar 2024
