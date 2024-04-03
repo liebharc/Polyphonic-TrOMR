@@ -9,7 +9,7 @@ from model import TrOMR
 from configs import Config
 from image_processing import readimg
 
-default_checkpoint_file_path = os.path.join(os.path.dirname(__file__), "workspace", "checkpoints", "img2score_epoch47.pth")
+default_checkpoint_file_path = os.path.join(os.path.dirname(__file__), "workspace", "checkpoints", "pytorch_model_1711744203.pth")
 
 class Staff2Score(object):
     def __init__(self, config: Config, checkpoint_file_path = default_checkpoint_file_path):

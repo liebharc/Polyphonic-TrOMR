@@ -1,5 +1,6 @@
 import os
 import sys
+import PIL.Image
 import cv2
 import numpy as np
 from scipy.signal import find_peaks
@@ -103,14 +104,40 @@ def _check_staff_image(path, basename):
 
 def _distort_image(path):
     image = PIL.Image.open(path)
+    image = _add_random_gray_tone(image)
+    image = _random_zoom_while_keeping_the_original_size(image)
     pipeline = Compose(
              [tr.RandomRotation(degrees = 1),
               tr.RandomPerspective(0.05),
+              tr.ColorJitter(brightness = 0.1, contrast = 0.1, saturation = 0.1, hue = 0.1),
               tr.RandomAdjustSharpness(2),])
 
     augmented_image = pipeline(img = image)
     augmented_image.save(path)
     return path
+
+def _add_random_gray_tone(image):
+    image = np.array(image)
+    random_gray_value = 255 - np.random.randint(0, 50)
+
+    mask = np.all(image > random_gray_value, axis=-1)
+
+    jitter = np.random.randint(-5, 5, size=mask.shape)
+
+    gray = np.clip(random_gray_value + jitter, 0, 255)
+
+    image[mask] = gray[mask, None]
+
+    return PIL.Image.fromarray(image)
+
+def _random_zoom_while_keeping_the_original_size(image):
+    image_size = (image.height, image.width)
+    random_zoom = np.random.uniform(0.8, 1.2)
+    image_zoom = (int(image.width * random_zoom), int(image.height * random_zoom))
+    image = image.resize(image_zoom)
+    image_crop = (int((image.width - image_size[1]) / 2), int((image.height - image_size[0]) / 2))
+    image = image.crop((image_crop[0], image_crop[1], image_crop[0] + image_size[1], image_crop[1] + image_size[0]))
+    return image
 
 def _music_xml_to_semantic(path, basename):
     result = music_xml_to_semantic(path)
