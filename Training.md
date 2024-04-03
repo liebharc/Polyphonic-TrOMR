@@ -3,15 +3,24 @@
 - Optional: Install [NVidia Apex](https://github.com/NVIDIA/apex) - only needed if the `--fast` option is used during training
 - Download and unpack [Camera-PrIMus](https://grfia.dlsi.ua.es/primus/) to `$gitroot/Corpus`
 - Download and unpack [GrandStaff](https://sites.google.com/view/multiscore-project/datasets) to `$gitroot/grandstaff`
+- Clone [CPMS](https://github.com/itec-hust/CPMS) to `$gitroot/CPMS`
 - Make sure you have installed pytorch and CUDA correctly
 
 ## Train log
+
+### Run2
+
+Date: 01 Apr 2024
+Training time: ~48h
+Commit: 516093a3f3840cb82922b4d7300d1568455277d568f85ea96fe41235a06ca8de6759f1db6b8fc39a
+SER: 79%
 
 ### Run1
 
 Date: 24 Mar 2024
 Training time: ~24h (fast option)
-Commit: 74adcbc396b462c77ad8d1fd8f4f3c6a01b5836e
+Commit: 516093a3f3841235a06ca8de6759f1db6b8fc39a
+SER: 82%
 Result:
 
 ```
@@ -22,3 +31,6 @@ Result:
 ### Run 0
 
 The weights from the [original paper](https://arxiv.org/abs/2308.09370).
+SER\*: 74%
+
+- SER failues shown here should be taken with a grain of salt

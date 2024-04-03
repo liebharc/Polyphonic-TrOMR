@@ -8,12 +8,11 @@ from pathlib import Path
 from torchvision import transforms as tr
 from torchvision.transforms import Compose
 import PIL
-import xmltodict
 import tempfile
 import multiprocessing
 
-from circle_of_fifths import KeyTransformation, circle_of_fifth_to_key_signature
 from image_processing import add_image_into_tr_omr_canvas
+from music_xml import music_xml_to_semantic
 
 script_location = os.path.dirname(os.path.realpath(__file__))
 git_root = os.path.join(script_location, '..')
@@ -112,15 +111,9 @@ def _distort_image(path):
     augmented_image = pipeline(img = image)
     augmented_image.save(path)
     return path
-    
+
 def _music_xml_to_semantic(path, basename):
-    result = []
-    with open(path) as f:
-        musicxml = xmltodict.parse(f.read())
-        parts = musicxml['score-partwise']["part"]
-        for part in parts:
-            semantic = _music_part_to_semantic(part)
-            result.append(semantic)
+    result = music_xml_to_semantic(path)
     if len(result) != 2:
         return None, None
     with open(basename + "_upper.semantic", "w") as f:
@@ -128,88 +121,6 @@ def _music_xml_to_semantic(path, basename):
     with open(basename + "_lower.semantic", "w") as f:
         f.write(" ".join(result[1]))
     return basename + "_upper.semantic", basename + "_lower.semantic"
-
-def _ensure_list(obj):
-    if type(obj) is list:
-        return obj
-    return [obj]
-
-def _count_dots(note):
-    if "dot" not in note:
-        return ""
-    return "." * len(_ensure_list(note["dot"]))
-
-def _music_part_to_semantic(part):
-    try:
-        semantic = []
-        for measure in _ensure_list(part["measure"]):
-            chord = []
-            key = KeyTransformation(0)
-            if "attributes" in measure:
-                for attribute in _ensure_list(measure["attributes"]):
-                    if "clef" in attribute:
-                        semantic.append("clef-" + attribute["clef"]["sign"] + attribute["clef"]["line"])
-                    if "time" in attribute:
-                        semantic.append("timeSignature-" + attribute["time"]["beats"] + "/" + attribute["time"]["beat-type"])
-                    if "key" in attribute:
-                        semantic.append("keySignature-" + circle_of_fifth_to_key_signature(int(attribute["key"]["fifths"])))
-                        key = KeyTransformation(int(attribute["key"]["fifths"]))
-            if "note" in measure:
-                for note in  _ensure_list(measure["note"]):
-                    if "rest" in note:
-                        dot = _count_dots(note)
-                        semantic.append("rest-" + _translate_duration(note["type"]) + dot)
-                        if len(chord) > 0:
-                            # FLush the previous chord
-                            semantic.append("|".join(chord))
-                            chord = []
-                    if "pitch" in note:
-                        if not "chord" in note:
-                            if len(chord) > 0:
-                                # FLush the previous chord
-                                semantic.append("|".join(chord))
-                                chord = []
-                        key.add_accidental(note["pitch"]["step"], _get_alter(note["pitch"]))
-                        alter = _get_alter(note["pitch"])
-                        chord.append("note-" + note["pitch"]["step"] + alter + note["pitch"]["octave"] + "_" + _translate_duration(note["type"]) + _count_dots(note))
-                        
-            if len(chord) > 0:
-                # FLush the last chord
-                semantic.append("|".join(chord))
-            semantic.append("barline")
-            key = key.reset_at_end_of_measure()
-
-        # Remove the last bar line
-        if len(semantic) > 0 and semantic[-1] == "barline":
-            semantic.pop()
-        return semantic
-    except Exception as e:
-        print("Failure at ", part)
-        raise e
-
-def _translate_duration(duration):
-    definition = {
-        "breve": "double_whole",
-        "whole": "whole",
-        "half": "half",
-        "quarter": "quarter",
-        "eighth": "eighth",
-        "16th": "sixteenth",
-        "32nd": "thirty_second",
-        "64th": "sixty_fourth",
-    }
-    return definition[duration]
-
-def _get_alter(note):
-    if not "alter" in note:
-        return ""
-    if note["alter"] == "1":
-        return "#"
-    if note["alter"] == "-1":
-        return "b"
-    if note["alter"] == "0":
-        return "0"
-    return ""
 
 def _convert_file(path: Path, ony_recreate_semantic_files = False):
     basename = str(path).replace(".krn", "")

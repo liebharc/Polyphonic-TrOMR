@@ -10,3 +10,10 @@ primusCalvoRizoAppliedSciences2018.tgz
 /grandstaff
 /hum2xml
 /cpms_index.txt
+/CreativeCommons/*.mxl
+/CreativeCommons/*/job.json
+/CreativeCommons/*/music.musicxml
+/CreativeCommons/*/music-*.svg
+/MuseScore.AppImage
+/tromr/workspace/checkpoints/*_ser.txt
+/CPMS
