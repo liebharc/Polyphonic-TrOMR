@@ -89,6 +89,9 @@ compile_model = number_of_files < 0 or number_of_files * number_of_epochs >= 500
 if compile_model:
     print('Compiling model')
 
+git_count = os.popen('git rev-list --count HEAD').read().strip()
+git_head = os.popen('git rev-parse HEAD').read().strip()
+
 train_args = TrainingArguments(
     f"test-primus",
     torch_compile=compile_model,
@@ -102,7 +105,7 @@ train_args = TrainingArguments(
     weight_decay=0.01,
     load_best_model_at_end=True,
     metric_for_best_model="loss",
-    logging_dir='logs',
+    logging_dir=os.path.join('logs', f'run{git_count}-{git_head}'),
     save_strategy="epoch",
     label_names=['rhythms_seq', 'note_seq', 'lifts_seq', 'pitchs_seq'],
     fp16=args.fast,
@@ -117,7 +120,6 @@ if args.pretrained:
 else:
     model = TrOMR(default_config)
 
-timestamp = str(round(time.time()))
 try:
     trainer = Trainer(
         model,
@@ -130,6 +132,6 @@ try:
 except KeyboardInterrupt:
     print('Interrupted')
 
-model_destination = os.path.join(script_location, 'workspace', 'checkpoints', f'pytorch_model_{timestamp}.pth')
+model_destination = os.path.join(script_location, 'workspace', 'checkpoints', f'pytorch_model_{git_count}-{git_head}.pth')
 torch.save(model.state_dict(), model_destination)
 print(f'Saved model to {model_destination}')

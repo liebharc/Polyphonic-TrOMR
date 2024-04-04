@@ -3,6 +3,7 @@ import torch.nn as nn
 
 from timm.models.vision_transformer import VisionTransformer
 from timm.models.vision_transformer_hybrid import HybridEmbed
+from timm.models.inception_resnet_v2 import InceptionResnetV2
 from timm.models.resnetv2 import ResNetV2
 from timm.models.layers import StdConv2dSame
 from einops import repeat
@@ -38,9 +39,13 @@ class CustomVisionTransformer(VisionTransformer):
 
 def get_encoder(config: Config):
     backbone_layers = list(config.backbone_layers)
-    backbone = ResNetV2(
-        layers=backbone_layers, num_classes=0, global_pool='', in_chans=config.channels,
-        preact=True, stem_type='same', conv_layer=StdConv2dSame)
+    backbone = InceptionResnetV2(
+        num_classes=0, global_pool='', in_chans=config.channels,
+    )
+    #backbone = ResNetV2(
+    #    num_classes=0, global_pool='', in_chans=config.channels,
+    #    layers=backbone_layers, preact=True, stem_type='same', conv_layer=StdConv2dSame
+    #)
     min_patch_size = 2**(len(backbone_layers)+1)
 
     def embed_layer(**x):

@@ -57,8 +57,9 @@ def _split_staff_image(path, basename):
     if middle < 15 or middle > image.shape[0] - 15:
         print(f"INFO: Failed to split {path}, middle is at {middle}")
         return None, None
-    upper = _prepare_image(_center_image(image[:middle], centers[2] + _random_center_offset()))
-    lower = _prepare_image(_center_image(image[middle:], centers[7] - middle + _random_center_offset()))
+    overlap = 10
+    upper = _prepare_image(_center_image(image[:middle+overlap], centers[2] + _random_center_offset()))
+    lower = _prepare_image(_center_image(image[middle-overlap:], centers[7] - middle + _random_center_offset()))
     cv2.imwrite(basename + "_upper-pre.jpg", upper)
     cv2.imwrite(basename + "_lower-pre.jpg", lower)
     return _distort_image(basename + "_upper-pre.jpg"), _distort_image(basename + "_lower-pre.jpg")
@@ -182,7 +183,7 @@ def convert_grandstaff(ony_recreate_semantic_files: bool = False):
     if ony_recreate_semantic_files:
         index_file = tempfile.mktemp()
     
-    print('Indexing Grandstaff dataset, this can take several hours')
+    print('Indexing Grandstaff dataset, this can up to an hour. "Failed to split" messages are expected during the run as the splitting works for most but not all files.')
     with open(index_file, 'w') as f:
         file_number = 0
         multiprocessing.set_start_method('spawn')
