@@ -3,7 +3,6 @@ import sys
 import cv2
 import numpy as np
 from scipy.signal import find_peaks
-import matplotlib.pyplot as plt
 from pathlib import Path
 from torchvision import transforms as tr
 from torchvision.transforms import Compose
@@ -50,14 +49,38 @@ def _split_staff_image(path, basename):
     norm = (dark_pixels_per_row - np.mean(dark_pixels_per_row)) / np.std(dark_pixels_per_row)
     centers, _ = find_peaks(norm, height=1.4, distance=3, prominence=1)
     if len(centers) != 10:
-        print(f"INFO: Failed to split {path}, found {len(centers)} centers")
-        return None, None
-    middle = np.int32(np.round((centers[4] + centers[5]) / 2))
+        conv_len = image.shape[0] // 4 + 1
+        blurred = np.convolve(dark_pixels_per_row, np.ones(conv_len) / conv_len, mode='same')
+
+        # Find the central valley
+        peaks, _ = find_peaks(-blurred, distance=50, prominence=1)
+        if len(peaks) >= 1:
+            peaks = [peaks[0]]
+            #print(f"INFO: Using central valley {path}")
+        elif len(centers) == 5:
+            upper = _prepare_image(image)
+            predistorted_path = basename + "_distorted.jpg"
+            if os.path.exists(predistorted_path):
+                return predistorted_path, None
+            print(f"INFO: Couldn't find pre-distorted image {path}, using custom distortions")
+            cv2.imwrite(basename + "_upper-pre.jpg", upper)
+            return _distort_image(basename + "_upper-pre.jpg"), None
+        else:
+            print(f"INFO: Failed to split {path}, found {len(centers)} centers, no central valley")
+            return None, None
+        middle = peaks[0]
+        center_upper = peaks[0] // 2 + _random_center_offset()
+        center_lower = peaks[0] + (image.shape[0] - peaks[0]) // 2 + _random_center_offset()
+    else:
+        middle = np.int32(np.round((centers[4] + centers[5]) / 2))
+        center_upper = centers[2] + _random_center_offset()
+        center_lower = centers[7] + _random_center_offset()
+
     if middle < 15 or middle > image.shape[0] - 15:
         print(f"INFO: Failed to split {path}, middle is at {middle}")
         return None, None
-    upper = _prepare_image(_center_image(image[:middle], centers[2] + _random_center_offset()))
-    lower = _prepare_image(_center_image(image[middle:], centers[7] - middle + _random_center_offset()))
+    upper = _prepare_image(_center_image(image[:middle], center_upper))
+    lower = _prepare_image(_center_image(image[middle:], center_lower))
     cv2.imwrite(basename + "_upper-pre.jpg", upper)
     cv2.imwrite(basename + "_lower-pre.jpg", lower)
     return _distort_image(basename + "_upper-pre.jpg"), _distort_image(basename + "_lower-pre.jpg")
@@ -84,8 +107,8 @@ def _get_image_bounds(dark_pixels_per_row):
         if dark_pixels_per_row[i] > 0:
             break
         white_upper_area_size += 1
-    white_lower_area_size = 0
-    for i in range(dark_pixels_per_row.shape[0] - 1, -1, -1):
+    white_lower_area_size = 1
+    for i in range(dark_pixels_per_row.shape[0] - 1, 0, -1):
         if dark_pixels_per_row[i] > 0:
             break
         white_lower_area_size += 1
@@ -142,6 +165,10 @@ def _convert_file(path: Path, ony_recreate_semantic_files = False):
     if upper_semantic is None:
         print(f"Failed to convert {musicxml}")
         return []
+    if lower is None:
+        return [
+            str(Path(upper).relative_to(git_root)) + "," + str(Path(upper_semantic).relative_to(git_root)),
+        ]
     return [
         str(Path(upper).relative_to(git_root)) + "," + str(Path(upper_semantic).relative_to(git_root)),
         str(Path(lower).relative_to(git_root)) + "," + str(Path(lower_semantic).relative_to(git_root)),
@@ -158,15 +185,18 @@ def convert_grandstaff(ony_recreate_semantic_files: bool = False):
     print('Indexing Grandstaff dataset, this can take several hours')
     with open(index_file, 'w') as f:
         file_number = 0
+        skipped_files = 0
         multiprocessing.set_start_method('spawn')
         with multiprocessing.Pool() as p:
             for result in p.imap_unordered(_convert_file_only_semantic if ony_recreate_semantic_files else _convert_file, Path(grandstaff_root).rglob('*.krn')):
                 if len(result) > 0:
-                    f.write(result[0] + '\n')
-                    f.write(result[1] + '\n')
+                    for line in result:
+                        f.write(line + '\n')
+                else:
+                    skipped_files += 1
                 file_number += 1
                 if file_number % 1000 == 0:
-                    print(f"Processed {file_number} files")        
+                    print(f"Processed {file_number} files, skipped {skipped_files} files")        
     print('Done indexing')
 
 if __name__ == "__main__":
