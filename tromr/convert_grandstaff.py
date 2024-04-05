@@ -57,7 +57,7 @@ def _split_staff_image(path, basename):
     if middle < 15 or middle > image.shape[0] - 15:
         print(f"INFO: Failed to split {path}, middle is at {middle}")
         return None, None
-    overlap = 10
+    overlap = np.random.randint(0, 20)
     upper = _prepare_image(_center_image(image[:middle+overlap], centers[2] + _random_center_offset()))
     lower = _prepare_image(_center_image(image[middle-overlap:], centers[7] - middle + _random_center_offset()))
     cv2.imwrite(basename + "_upper-pre.jpg", upper)
