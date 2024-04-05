@@ -39,13 +39,13 @@ class CustomVisionTransformer(VisionTransformer):
 
 def get_encoder(config: Config):
     backbone_layers = list(config.backbone_layers)
-    backbone = InceptionResnetV2(
-        num_classes=0, global_pool='', in_chans=config.channels,
-    )
-    #backbone = ResNetV2(
+    #backbone = InceptionResnetV2(
     #    num_classes=0, global_pool='', in_chans=config.channels,
-    #    layers=backbone_layers, preact=True, stem_type='same', conv_layer=StdConv2dSame
     #)
+    backbone = ResNetV2(
+        num_classes=0, global_pool='', in_chans=config.channels,
+        layers=backbone_layers, preact=True, stem_type='same', conv_layer=StdConv2dSame
+    )
     min_patch_size = 2**(len(backbone_layers)+1)
 
     def embed_layer(**x):
