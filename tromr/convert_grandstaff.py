@@ -62,7 +62,10 @@ def _split_staff_image(path, basename):
             upper = _prepare_image(image)
             predistorted_path = basename + "_distorted.jpg"
             if os.path.exists(predistorted_path):
-                return predistorted_path, None
+                predistorted_image = cv2.imread(predistorted_path)
+                single_image = _prepare_image(predistorted_image)
+                cv2.imwrite(basename + "_single-pre.jpg", single_image)
+                return _distort_image(basename + "_single-pre.jpg"), None
             print(f"INFO: Couldn't find pre-distorted image {path}, using custom distortions")
             cv2.imwrite(basename + "_upper-pre.jpg", upper)
             return _distort_image(basename + "_upper-pre.jpg"), None
