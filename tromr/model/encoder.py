@@ -44,7 +44,7 @@ def get_encoder(config: Config):
     #)
     backbone = ResNetV2(
         num_classes=0, global_pool='', in_chans=config.channels,
-        drop_rate=0.1, drop_path_rate=0.1,
+        drop_rate=0.8, drop_path_rate=0.8,
         layers=backbone_layers, preact=True, stem_type='same', conv_layer=StdConv2dSame
     )
     min_patch_size = 2**(len(backbone_layers)+1)
