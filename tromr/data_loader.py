@@ -27,12 +27,26 @@ class DataLoader():
 
     def __init__(self, corpus_list, rhythm_vocab, pitch_vocab, note_vocab, lift_vocab, config: Config):
         self.current_idx = 0
-        self.corpus_list = corpus_list
+        self.corpus_list = self._add_mask_steps(corpus_list)
         self.rhythm_vocab = rhythm_vocab
         self.pitch_vocab = pitch_vocab
         self.note_vocab = note_vocab
         self.lift_vocab = lift_vocab
         self.config = config
+
+    def _add_mask_steps(self, corpus_list):
+        result = []
+        for entry in corpus_list:
+            image, semantic_file = entry.strip().split(',')
+            semantic = self._read_semantic(semantic_file)[2]
+            semantic_len = len(semantic[0])
+            for mask_len in range(1, semantic_len):
+                result.append({
+                    "image": image,
+                    "semantic": semantic_file,
+                    "mask_len": mask_len
+                })
+        return result
 
     def __len__(self):
         return len(self.corpus_list)
@@ -103,11 +117,11 @@ class DataLoader():
     
     def __getitem__(self, idx):
         entry = self.corpus_list[idx].strip()
-        sample_filepath = entry.split(",")[0]
+        sample_filepath = entry["image"]
         sample_img = readimg(self.config, os.path.join(git_root, sample_filepath))
 
         # ground truth
-        sample_full_filepath = entry.split(",")[1]
+        sample_full_filepath = entry["semantic"]
         liftsymbols, pitchsymbols, rhythmsymbols, note_symbols = self._read_semantic(sample_full_filepath)
 
         rhythm = _translate_symbols(rhythmsymbols[0], self.rhythm_vocab, self.config.pad_token, 'rhythm')
@@ -116,7 +130,7 @@ class DataLoader():
         notes = _translate_symbols(note_symbols[0], self.note_vocab, self.config.nonote_token, 'note')
         rhythm_seq = self._check_seq_values(self._pad_rhythm(rhythm), self.config.num_rhythm_tokens)
         mask = np.zeros(self.config.max_seq_len).astype(np.bool_)
-        mask[:len(rhythm_seq)] = 1
+        mask[:entry["mask_len"] + 2] = 1
         result = {
             'inputs': sample_img,
             'mask': mask,
