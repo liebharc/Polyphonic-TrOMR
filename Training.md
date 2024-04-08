@@ -6,7 +6,76 @@
 - Clone [CPMS](https://github.com/itec-hust/CPMS) to `$gitroot/CPMS`
 - Make sure you have installed pytorch and CUDA correctly
 
+## To Checks
+
+- Label Smoothing
+- Increase data set by fully masking
+- Visualize attention: https://github.com/huggingface/pytorch-image-models/discussions/1232
+- Different values for alpha and beta
+- Restore additional rhythm classes
+- Dataset with negative exampkes (no sheet music)
+
 ## Train log
+
+## Run 57 Dropout 0.8
+
+Date: 07 Apr 2024
+Training time: ~14h (fast option)
+Commit: 3fc893c0ab547fe1958adf500b0afaf0f6990f80
+SER: 81%
+
+Changes to the conversion of the grandstaff dataset haven't been applied yet.
+
+## Run 56 Dropout 0.1
+
+Date: 07 Apr 2024
+Training time: ~14h (fast option)
+Commit: 5ec6beaf461c034340ad0d2f832d842bef8bee75
+SER: 72%
+Manual validation result: 13.8
+
+Changes to the conversion of the grandstaff dataset haven't been applied yet.
+
+## Run 55 Dropout 0.2
+
+Date: 06 Apr 2024
+Training time: ~14h (fast option)
+Commit: d73d5a9d342d4d934c21409632f4e2854d14d333
+SER: 74%
+Manual validation result: 17.0
+
+Changes to the conversion of the grandstaff dataset haven't been applied yet.
+
+## Run 51 Dropout 0
+
+Start of dropout tests, number ranges for dropouts are mainly based on https://arxiv.org/pdf/2303.01500.pdf.
+
+Date: 05 Apr 2024
+Training time: ~14h (fast option)
+Commit: cd445caa5337d86cf723854cb2ef9e98dd4c5b76
+SER: 72%
+Manual validation result: 18.4
+
+## Run50 InceptionResnetV2
+
+We changed how we number runs and established a link between the run number and the git history.
+
+Date: 05 Apr 2024
+Training time: ~19h (fast option)
+Commit: a57ee4c046842c0135adca84f06260cff8af732f
+SER: 88%
+
+We tried InceptionResnetV2. The training run showed overfitting and the resulting SER indicates poor results. The model is over 3 times larger than the ResNetV2 model and might require more work to prevent overfitting.
+
+### Run3
+
+Date: 02 Apr 2024
+Training time: ~24h (fast option)
+Commit: 9ddfff8b5782473e8831ca3791d9bef99f726654
+SER: 73%
+Manual validation result: 23.4
+
+We decreased the vocabulary, the alpha/beta ratio in the loss function and made changes to the grandstaff dataset. While still performing worse than Run 0 in the manual validation, it gets closer now and in some specific tests performs even better than Run 0. We will have to backtrack from this point to find out which of the changes lead to an improved result.
 
 ### Run2
 
@@ -32,5 +101,6 @@ Result:
 
 The weights from the [original paper](https://arxiv.org/abs/2308.09370).
 SER\*: 74%
+Manual validation result: 9.3
 
 - SER failues shown here should be taken with a grain of salt
