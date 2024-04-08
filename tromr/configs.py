@@ -74,7 +74,7 @@ class Config:
         self.decoder_dim = 256
         self.decoder_depth = 4
         self.decoder_heads = 8
-        self.temperature = 0.1
+        self.temperature = 0.01
         self.decoder_args = DecoderArgs()
 
     def to_dict(self):

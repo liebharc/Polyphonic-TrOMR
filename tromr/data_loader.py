@@ -94,19 +94,21 @@ class DataLoader():
                 print('Checked ' + str(i) + '/' + str(len(self)) + ' entries')
         return has_errors
     
+    def _read_semantic(self, path):
+        if path == "nosymbols":
+            return [], [], [], []
+        with open(path, 'r') as file:
+            semantic = file.readline().rstrip()
+            return split_symbols([semantic])
+    
     def __getitem__(self, idx):
         entry = self.corpus_list[idx].strip()
         sample_filepath = entry.split(",")[0]
         sample_img = readimg(self.config, os.path.join(git_root, sample_filepath))
 
-        # GROUND TRUTH
+        # ground truth
         sample_full_filepath = entry.split(",")[1]
-
-        sample_gt_file = open(os.path.join(git_root, sample_full_filepath), 'r')
-        sample_gt_plain = sample_gt_file.readline().rstrip()
-        sample_gt_file.close()
-
-        liftsymbols, pitchsymbols, rhythmsymbols, note_symbols = split_symbols([sample_gt_plain])
+        liftsymbols, pitchsymbols, rhythmsymbols, note_symbols = self._read_semantic(sample_full_filepath)
 
         rhythm = _translate_symbols(rhythmsymbols[0], self.rhythm_vocab, self.config.pad_token, 'rhythm')
         lifts = _translate_symbols(liftsymbols[0], self.lift_vocab, self.config.nonote_token, 'lift')
