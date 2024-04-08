@@ -165,7 +165,7 @@ class ScoreDecoder(nn.Module):
             mask = mask[:, :-1]
             kwargs['mask'] = mask
 
-        rhythmsp, pitchsp, liftsp, notesp, x = self.net(rhythmsi, pitchsi, liftsi, **kwargs) 
+        rhythmsp, pitchsp, liftsp, notesp, x = self.net(rhythmsi, pitchsi, liftsi, **kwargs)  # this calls ScoreTransformerWrapper.forward
         
         loss_consist = self.calConsistencyLoss(rhythmsp, pitchsp, liftsp, notesp)
         loss_rhythm = F.cross_entropy(rhythmsp.transpose(1, 2), rhythmso, ignore_index = self.ignore_index)

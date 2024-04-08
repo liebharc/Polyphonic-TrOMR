@@ -10,8 +10,8 @@ from image_processing import add_image_into_tr_omr_canvas
 
 script_location = os.path.dirname(os.path.realpath(__file__))
 git_root = os.path.join(script_location, '..')
-diw_root = os.path.join(git_root, 'diw')
-diw_train_index = os.path.join(diw_root, 'index.txt')
+diw_root = os.path.join(git_root, 'diw', '5k', 'img')
+diw_train_index = os.path.join(git_root, 'diw', 'index.txt')
 
 
 def _convert_file(file: Path):
@@ -32,8 +32,8 @@ def _convert_file(file: Path):
     cropped = image[top:bottom, left:right, :]
 
     target_path = str(file).replace('.png', '-pre.png')
-    cv2.imwrite(target_path, cropped)
-    return [f'{target_path},nostaff\n']
+    cv2.imwrite(target_path, add_image_into_tr_omr_canvas(cropped))
+    return [f'{target_path},nosymbols\n']
 
 
 def _convert_dataset(glob_result, index_file: str):
@@ -49,7 +49,7 @@ def _convert_dataset(glob_result, index_file: str):
 
 def convert_diw_dataset():
     print('Indexing documents in the wild dataset')
-    _convert_dataset(Path(diw_root).rglob('*.png'), diw_train_index)
+    _convert_dataset(Path(diw_root).rglob('*[!-pre].png'), diw_train_index)
     print('Done indexing')
 
 

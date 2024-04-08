@@ -3,6 +3,7 @@ import json
 import os
 
 import torch
+import random
 from configs import Config
 from split_merge_symbols import split_symbols
 from image_processing import readimg
@@ -40,7 +41,22 @@ class DataLoader():
             image, semantic_file = entry.strip().split(',')
             semantic = self._read_semantic(semantic_file)[2]
             semantic_len = len(semantic[0])
-            for mask_len in range(1, semantic_len):
+            # If we would have the money to do it we would want to use: mask_lens = range(1, semantic_len)
+            # Instead we construct take up to 3 random mask lengths and the full length
+            #mask_lens = set()
+            #mask_lens.add(semantic_len + 1)
+            #image_basename = os.path.basename(image)
+            #image_basename_hash = hash(image_basename)
+
+            # Seed the random generator here to get more reproducible results
+            # Although it isn't clear if this really affects the results more 
+            # than all the randomness in the conversion of the data sets
+            #random.seed(image_basename_hash)  
+            #for _ in range(1, min(3, semantic_len)):
+            #    mask_lens.add(random.randint(1, semantic_len))
+            mask_lens = set() # range(2, semantic_len + 2)  # + 2 for the BOS and EOS token
+            mask_lens.add(semantic_len + 2)
+            for mask_len in mask_lens:
                 result.append({
                     "image": image,
                     "semantic": semantic_file,
@@ -63,7 +79,6 @@ class DataLoader():
         samples_padded = np.ones(self.config.max_seq_len, dtype=np.int64) * self.PAD_COLUMN
         valid_len = min(self.config.max_seq_len, len(samples))
         samples_padded[:valid_len] = np.array(samples[:valid_len])
-        #tensor = torch.from_numpy(samples_padded).to(cuda0)
         return samples_padded
     
     def _pad_rhythm(self, samples):
@@ -110,13 +125,13 @@ class DataLoader():
     
     def _read_semantic(self, path):
         if path == "nosymbols":
-            return [], [], [], []
+            return [[]], [[]], [[]], [[]]
         with open(path, 'r') as file:
             semantic = file.readline().rstrip()
             return split_symbols([semantic])
     
     def __getitem__(self, idx):
-        entry = self.corpus_list[idx].strip()
+        entry = self.corpus_list[idx]
         sample_filepath = entry["image"]
         sample_img = readimg(self.config, os.path.join(git_root, sample_filepath))
 
@@ -130,7 +145,7 @@ class DataLoader():
         notes = _translate_symbols(note_symbols[0], self.note_vocab, self.config.nonote_token, 'note')
         rhythm_seq = self._check_seq_values(self._pad_rhythm(rhythm), self.config.num_rhythm_tokens)
         mask = np.zeros(self.config.max_seq_len).astype(np.bool_)
-        mask[:entry["mask_len"] + 2] = 1
+        mask[:entry["mask_len"]] = 1
         result = {
             'inputs': sample_img,
             'mask': mask,

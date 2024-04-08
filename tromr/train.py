@@ -15,6 +15,7 @@ from model.tromr_arch import TrOMR
 from configs import default_config
 from convert_grandstaff import grandstaff_train_index, convert_grandstaff
 from convert_primus import primus_train_index, convert_primus_dataset, primus_distorted_train_index, cpms_train_index, convert_cpms_dataset
+from convert_documents_in_the_wild import diw_train_index, convert_diw_dataset
 from mix_datasets import mix_training_sets
 
 
@@ -28,6 +29,8 @@ def check_data_source(all_file_paths: List[str]):
     for file_paths in all_file_paths:
         paths = file_paths.strip().split(",")
         for path in paths:
+            if path == "nosymbols":
+                continue
             if not os.path.exists(path):
                 print(f'Index {file_paths} does not exist due to {path}')
                 result = False
@@ -51,7 +54,7 @@ git_root = os.path.join(script_location, '..')
 tr_omr_pretrained = os.path.join(script_location, 'workspace', 'checkpoints', 'img2score_epoch47.pth')
 
 number_of_files = -1
-number_of_epochs = 30
+number_of_epochs = 25
 
 parser = argparse.ArgumentParser(
                 prog='train.py',
@@ -76,10 +79,13 @@ if not os.path.exists(cpms_train_index):
 if not os.path.exists(grandstaff_train_index):
     convert_grandstaff()
 
+if not os.path.exists(diw_train_index):
+    convert_diw_dataset()
+
 if os.path.exists(os.path.join(git_root, "test-primus")):
     shutil.rmtree(os.path.join(git_root, "test-primus"))
 
-train_index = load_and_mix_training_sets([primus_distorted_train_index, cpms_train_index, grandstaff_train_index], [1.0, 1.0, 1.0], number_of_files)
+train_index = load_and_mix_training_sets([primus_distorted_train_index, cpms_train_index, grandstaff_train_index, diw_train_index], [1.0, 1.0, 1.0, 1.0], number_of_files)
 
 datasets = load_dataset(train_index, default_config, val_split = 0.1)
 
