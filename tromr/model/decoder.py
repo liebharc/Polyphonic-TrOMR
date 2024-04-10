@@ -167,11 +167,11 @@ class ScoreDecoder(nn.Module):
 
         rhythmsp, pitchsp, liftsp, notesp, x = self.net(rhythmsi, pitchsi, liftsi, **kwargs)  # this calls ScoreTransformerWrapper.forward
         
-        loss_consist = self.calConsistencyLoss(rhythmsp, pitchsp, liftsp, notesp)
-        loss_rhythm = F.cross_entropy(rhythmsp.transpose(1, 2), rhythmso, ignore_index = self.ignore_index)
-        loss_pitch = F.cross_entropy(pitchsp.transpose(1, 2), pitchso, ignore_index = self.ignore_index)
-        loss_lift = F.cross_entropy(liftsp.transpose(1, 2), liftso, ignore_index = self.ignore_index)
-        loss_note = F.cross_entropy(notesp.transpose(1, 2), noteso, ignore_index = self.ignore_index)
+        loss_consist = self.calConsistencyLoss(rhythmsp, pitchsp, liftsp, notesp, mask)
+        loss_rhythm = self.masked_logits_cross_entropy(rhythmsp, rhythmso, mask)
+        loss_pitch = self.masked_logits_cross_entropy(pitchsp, pitchso, mask)
+        loss_lift = self.masked_logits_cross_entropy(liftsp, liftso, mask)
+        loss_note = self.masked_logits_cross_entropy(notesp, noteso, mask)
         # From the TR OMR paper equation 2, we use however different values for alpha and beta
         alpha = 0.1
         beta = 1 - alpha
@@ -186,21 +186,43 @@ class ScoreDecoder(nn.Module):
             loss = loss,
         )
 
-    def calConsistencyLoss(self, rhythmsp, pitchsp, liftsp, notesp, gamma=10):
+    def calConsistencyLoss(self, rhythmsp, pitchsp, liftsp, notesp, mask, gamma=10):
         notesp_soft = torch.softmax(notesp, dim=2)
-        note_flag = notesp_soft[:,:,1]
+        note_flag = notesp_soft[:,:,1] * mask
+
         rhythmsp_soft = torch.softmax(rhythmsp, dim=2)
-        rhythmsp_note = torch.sum(rhythmsp_soft * self.note_mask, dim=2)
+        rhythmsp_note = torch.sum(rhythmsp_soft * self.note_mask, dim=2) * mask
 
         pitchsp_soft = torch.softmax(pitchsp, dim=2)
-        pitchsp_note = torch.sum(pitchsp_soft[:,:,1:], dim=2)
+        pitchsp_note = torch.sum(pitchsp_soft[:,:,1:], dim=2) * mask
 
         liftsp_soft = torch.softmax(liftsp, dim=2)
-        liftsp_note = torch.sum(liftsp_soft[:,:,1:], dim=2)
+        liftsp_note = torch.sum(liftsp_soft[:,:,1:], dim=2) * mask
         
-        loss = gamma * (F.l1_loss(rhythmsp_note, note_flag) + 
-                        F.l1_loss(note_flag, liftsp_note) + 
-                        F.l1_loss(note_flag, pitchsp_note)) / 3.
+        loss = gamma * (F.l1_loss(rhythmsp_note, note_flag, reduction='none') + 
+                        F.l1_loss(note_flag, liftsp_note, reduction='none') + 
+                        F.l1_loss(note_flag, pitchsp_note, reduction='none')) / 3.
+
+        # Apply the mask to the loss and average over the non-masked elements
+        loss = (loss * mask).sum() / mask.sum()
+
+        return loss
+
+    def masked_logits_cross_entropy(self, logits, target, mask):
+        logits_mask = mask.unsqueeze(2)
+
+        # Apply the mask to the logits
+        logits = logits.masked_fill(logits_mask == 0, -1e3)
+
+        # Calculate the cross-entropy loss
+        loss = F.cross_entropy(logits.transpose(1, 2), target, reduction='none', ignore_index = self.ignore_index)
+
+        # Apply the mask to the loss
+        loss = loss * mask
+
+        # Average the loss over the non-masked elements
+        loss = loss.sum() / mask.sum()
+
         return loss
         
 def get_decoder(config: Config):

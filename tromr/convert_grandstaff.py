@@ -54,9 +54,9 @@ def _split_staff_image(path, basename):
         blurred = np.convolve(dark_pixels_per_row, np.ones(conv_len) / conv_len, mode='same')
 
         # Find the central valley
-        peaks, _ = find_peaks(-blurred, distance=50, prominence=1)
+        peaks, _ = find_peaks(-blurred, distance=10, prominence=1)
         if len(peaks) >= 1:
-            peaks = [peaks[0]]
+            peaks = [peaks[len(peaks) // 2]]
             #print(f"INFO: Using central valley {path}")
         elif len(centers) == 5:
             upper = _prepare_image(image)
@@ -84,9 +84,8 @@ def _split_staff_image(path, basename):
         print(f"INFO: Failed to split {path}, middle is at {middle}")
         return None, None
     
-    overlap = np.random.randint(0, 20)
-    upper = _prepare_image(_center_image(image[:middle+overlap], center_upper))
-    lower = _prepare_image(_center_image(image[middle-overlap:], center_lower))
+    upper = _prepare_image(_center_image(image[:middle], center_upper))
+    lower = _prepare_image(_center_image(image[middle:], center_lower))
     cv2.imwrite(basename + "_upper-pre.jpg", upper)
     cv2.imwrite(basename + "_lower-pre.jpg", lower)
     return _distort_image(basename + "_upper-pre.jpg"), _distort_image(basename + "_lower-pre.jpg")
@@ -133,7 +132,7 @@ def _check_staff_image(path, basename):
 def _distort_image(path):
     image = PIL.Image.open(path)
     image = _add_random_gray_tone(image)
-    image = _random_zoom_while_keeping_the_original_size(image)
+    #image = _random_zoom_while_keeping_the_original_size(image)
     pipeline = Compose(
              [tr.RandomRotation(degrees = 1),
               tr.RandomPerspective(0.05),

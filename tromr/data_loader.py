@@ -43,19 +43,19 @@ class DataLoader():
             semantic_len = len(semantic[0])
             # If we would have the money to do it we would want to use: mask_lens = range(1, semantic_len)
             # Instead we construct take up to 3 random mask lengths and the full length
-            #mask_lens = set()
-            #mask_lens.add(semantic_len + 1)
-            #image_basename = os.path.basename(image)
-            #image_basename_hash = hash(image_basename)
+            mask_lens = set()
+            mask_lens.add(semantic_len + 2)
+            image_basename = os.path.basename(image)
+            image_basename_hash = hash(image_basename)
 
             # Seed the random generator here to get more reproducible results
             # Although it isn't clear if this really affects the results more 
             # than all the randomness in the conversion of the data sets
-            #random.seed(image_basename_hash)  
-            #for _ in range(1, min(3, semantic_len)):
-            #    mask_lens.add(random.randint(1, semantic_len))
-            mask_lens = set() # range(2, semantic_len + 2)  # + 2 for the BOS and EOS token
-            mask_lens.add(semantic_len + 2)
+            random.seed(image_basename_hash)  
+            for _ in range(1, min(2, semantic_len)):
+                mask_lens.add(random.randint(1, semantic_len) + 1)
+            
+            #mask_lens = range(2, semantic_len + 2)  # + 2 for the BOS and EOS token
             for mask_len in mask_lens:
                 result.append({
                     "image": image,

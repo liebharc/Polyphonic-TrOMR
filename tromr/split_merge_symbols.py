@@ -8,6 +8,10 @@ def merge_symbols(predrhythms, predpitchs, predlifts):
         predlift = predlifts[i]
         predpitch = predpitchs[i]
         predrhythm = predrhythms[i]
+
+        if len(predrhythm) == 0:
+            merges.append("")
+            continue
         
         merge = predrhythm[0] + '+'
         for j in range(1, len(predrhythm)):
