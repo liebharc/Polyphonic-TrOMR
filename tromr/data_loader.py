@@ -53,7 +53,7 @@ class DataLoader():
             # than all the randomness in the conversion of the data sets
             random.seed(image_basename_hash)  
             for _ in range(1, min(2, semantic_len)):
-                mask_lens.add(random.randint(1, semantic_len) + 1)
+                mask_lens.add(random.randint(2, semantic_len) + 1)
             
             #mask_lens = range(2, semantic_len + 2)  # + 2 for the BOS and EOS token
             for mask_len in mask_lens:
