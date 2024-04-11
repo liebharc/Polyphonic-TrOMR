@@ -18,6 +18,16 @@
 
 ## Train log
 
+## Run 63
+
+Date: 11 Apr 2024
+Training time: ~26h (fast option)
+Commit: c360ab726df18879973e6829a1423c627a99afd5
+SER: 74%
+Manual validation result: 13.7
+
+Increased data set size by introducing a negative data set with no musical symbols. And by using positive data sets more often with different mask values.
+
 ## Run 57 Dropout 0.8
 
 Date: 07 Apr 2024

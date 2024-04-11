@@ -85,7 +85,7 @@ if not os.path.exists(diw_train_index):
 if os.path.exists(os.path.join(git_root, "test-primus")):
     shutil.rmtree(os.path.join(git_root, "test-primus"))
 
-train_index = load_and_mix_training_sets([primus_distorted_train_index, cpms_train_index, grandstaff_train_index, diw_train_index], [1.0, 1.0, 1.0, 1.0], number_of_files)
+train_index = load_and_mix_training_sets([primus_distorted_train_index, cpms_train_index, grandstaff_train_index], [1.0, 1.0, 1.0], number_of_files)
 
 datasets = load_dataset(train_index, default_config, val_split = 0.1)
 
@@ -105,8 +105,8 @@ train_args = TrainingArguments(
     evaluation_strategy="epoch",
     learning_rate=1e-4,  # TrOMR Paper page 3 specifies 1e-3, but that can cause issues with fp16 mode
     optim=optim,  
-    per_device_train_batch_size=16,  # TrOMR Paper page 3
-    per_device_eval_batch_size=8,
+    per_device_train_batch_size=32,  # TrOMR Paper page 3
+    per_device_eval_batch_size=16,
     num_train_epochs=number_of_epochs,
     weight_decay=0.01,
     load_best_model_at_end=True,

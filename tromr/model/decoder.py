@@ -174,7 +174,7 @@ class ScoreDecoder(nn.Module):
         loss_note = self.masked_logits_cross_entropy(notesp, noteso, mask)
         # From the TR OMR paper equation 2, we use however different values for alpha and beta
         alpha = 0.1
-        beta = 1 - alpha
+        beta = 1
         loss = alpha * (loss_rhythm + loss_pitch + loss_lift + loss_note) + beta * loss_consist
         
         return dict(
