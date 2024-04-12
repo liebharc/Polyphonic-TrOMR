@@ -81,7 +81,7 @@ def top_k(logits, thres = 0.9):
     return probs
 
 class ScoreDecoder(nn.Module):
-    def __init__(self, transformer, noteindexes, num_rhythmtoken, ignore_index = -100, pad_value = 0):
+    def __init__(self, transformer, noteindexes, num_rhythm_tokens, ignore_index = -100, pad_value = 0):
         super().__init__()
         self.pad_value = pad_value
         self.ignore_index = ignore_index
@@ -89,7 +89,7 @@ class ScoreDecoder(nn.Module):
         self.net = transformer
         self.max_seq_len = transformer.max_seq_len
 
-        note_mask = torch.zeros(num_rhythmtoken)
+        note_mask = torch.zeros(num_rhythm_tokens)
         note_mask[noteindexes] = 1
         self.note_mask = nn.Parameter(note_mask)
 
@@ -241,5 +241,5 @@ def get_decoder(config: Config):
                 **config.decoder_args.to_dict()
             )),
         pad_value=config.pad_token,
-        num_rhythmtoken = config.num_rhythmtoken,
+        num_rhythm_tokens = config.num_rhythm_tokens,
         noteindexes = config.noteindexes)

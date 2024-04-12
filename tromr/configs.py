@@ -57,20 +57,19 @@ class Config:
         self.bos_token = 1
         self.eos_token = 2
         self.nonote_token = 0
-        self.num_rhythmtoken = 70
+        self.num_rhythm_tokens = 260
         self.num_note_tokens = 2
         self.num_pitch_tokens = 71
         self.num_lift_tokens = 7
         self.lift_null = 0
         self.lift_sharp = 3
         self.lift_flat = 5
-        self.noteindexes = [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 49, 49]
+        self.noteindexes = [129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146]
         self.encoder_structure = "hybrid"
         self.encoder_depth = 4
         self.backbone_layers = [2, 3, 7]
         self.encoder_dim = 256
         self.encoder_heads = 8
-        self.num_rhythm_tokens = 70
         self.decoder_dim = 256
         self.decoder_depth = 4
         self.decoder_heads = 8
@@ -89,7 +88,6 @@ class Config:
             'bos_token': self.bos_token,
             'eos_token': self.eos_token,
             'nonote_token': self.nonote_token,
-            'num_rhythmtoken': self.num_rhythmtoken,
             'noteindexes': self.noteindexes,
             'encoder_structure': self.encoder_structure,
             'encoder_depth': self.encoder_depth,

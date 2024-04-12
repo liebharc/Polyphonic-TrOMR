@@ -86,14 +86,22 @@ def _symbol_to_rhythm(symbol):
     if symbol.startswith("note") or symbol.startswith("gracenote"):
         note = "note-" + _translate_duration(symbol.split("_")[1])
         return note + _add_dots(symbol)
-    symbol = symbol.replace("rest-quadruple_whole", "multirest")
+    symbol = symbol.replace("rest-quadruple_whole", "multirest-2")
     symbol = symbol.replace("_fermata", "")
     symbol = symbol.replace(".", "")  # We add dots later again
     multirest_match = re.match(r"(rest-whole|multirest-)(\d+)", symbol)
     if multirest_match:
-        symbol = "multirest"
-    if "timeSignature" in symbol:
-        symbol = "timeSignature"
+        rest_length = int(multirest_match[2])
+        # Some multirests don't exist in the rhtythm tokenizer, for now it's good enough to just recognize them as any multirest
+        if rest_length <= 1:
+            return "rest-whole"
+        if rest_length > 50:
+            return "multirest-50"
+        symbol = "multirest-" + str(rest_length)
+    symbol = symbol.replace("timeSignature-2/3", "timeSignature-2/4")
+    symbol = symbol.replace("timeSignature-3/6", "timeSignature-3/8")
+    symbol = symbol.replace("timeSignature-8/12", "timeSignature-8/16")
+    symbol = symbol.replace("timeSignature-2/48", "timeSignature-2/32")
     return symbol + _add_dots(symbol)
 
 
