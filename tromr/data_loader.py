@@ -144,15 +144,22 @@ class DataLoader():
         pitch = _translate_symbols(pitchsymbols[0], self.pitch_vocab, self.config.nonote_token, 'pitch')
         notes = _translate_symbols(note_symbols[0], self.note_vocab, self.config.nonote_token, 'note')
         rhythm_seq = self._check_seq_values(self._pad_rhythm(rhythm), self.config.num_rhythm_tokens)
+        note_seq = self._check_seq_values(self._pad_samples(notes), self.config.num_note_tokens)
+        lifts_seq = self._check_seq_values(self._pad_samples(lifts), self.config.num_lift_tokens)
+        pitchs_seq = self._check_seq_values(self._pad_samples(pitch), self.config.num_pitch_tokens)
         mask = np.zeros(self.config.max_seq_len).astype(np.bool_)
         mask[:entry["mask_len"]] = 1
+        rhythm_seq = rhythm_seq[:entry["mask_len"]]
+        note_seq = note_seq[:entry["mask_len"]]
+        lifts_seq = lifts_seq[:entry["mask_len"]]
+        pitchs_seq = pitchs_seq[:entry["mask_len"]]
         result = {
             'inputs': sample_img,
             'mask': mask,
             'rhythms_seq': self._pad_array_to_max_seq_len(rhythm_seq),
-            'note_seq': self._pad_array_to_max_seq_len(self._check_seq_values(self._pad_samples(notes), self.config.num_note_tokens)),
-            'lifts_seq': self._pad_array_to_max_seq_len(self._check_seq_values(self._pad_samples(lifts), self.config.num_lift_tokens)),
-            'pitchs_seq': self._pad_array_to_max_seq_len(self._check_seq_values(self._pad_samples(pitch), self.config.num_pitch_tokens)),
+            'note_seq': self._pad_array_to_max_seq_len(note_seq),
+            'lifts_seq': self._pad_array_to_max_seq_len(lifts_seq),
+            'pitchs_seq': self._pad_array_to_max_seq_len(pitchs_seq),
         }
         return result
     
