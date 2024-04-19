@@ -81,7 +81,7 @@ def top_k(logits, thres = 0.9):
     return probs
 
 class ScoreDecoder(nn.Module):
-    def __init__(self, transformer, noteindexes, num_rhythm_tokens, ignore_index = -100, pad_value = 0):
+    def __init__(self, transformer, noteindexes, num_rhythm_tokens, reduced_precision, ignore_index = -100, pad_value = 0):
         super().__init__()
         self.pad_value = pad_value
         self.ignore_index = ignore_index
@@ -92,6 +92,8 @@ class ScoreDecoder(nn.Module):
         note_mask = torch.zeros(num_rhythm_tokens)
         note_mask[noteindexes] = 1
         self.note_mask = nn.Parameter(note_mask)
+
+        self.mask_value = -1e4 if reduced_precision else -1e9
 
     @torch.no_grad()
     def generate(self, start_tokens, nonote_tokens, seq_len, eos_token = None, temperature = 1., filter_thres = 0.9, **kwargs):
@@ -212,7 +214,7 @@ class ScoreDecoder(nn.Module):
         logits_mask = mask.unsqueeze(2)
 
         # Apply the mask to the logits
-        logits = logits.masked_fill(logits_mask == 0, -1e4)
+        logits = logits.masked_fill(logits_mask == 0, self.mask_value)
 
         # Calculate the cross-entropy loss
         loss = F.cross_entropy(logits.transpose(1, 2), target, reduction='none', ignore_index = self.ignore_index)
@@ -228,7 +230,7 @@ class ScoreDecoder(nn.Module):
     def masked_focal_loss(self, logits, target, mask, gamma=2.0, alpha=0.25):
         # Apply the mask to the logits
         mask = mask.unsqueeze(2)
-        logits = logits.masked_fill(mask == 0, -1e4)
+        logits = logits.masked_fill(mask == 0, self.mask_value)
 
         # Calculate softmax
         probs = F.softmax(logits, dim=2)
@@ -265,4 +267,5 @@ def get_decoder(config: Config):
             )),
         pad_value=config.pad_token,
         num_rhythm_tokens = config.num_rhythm_tokens,
+        reduced_precision=config.reduced_precision,
         noteindexes = config.noteindexes)

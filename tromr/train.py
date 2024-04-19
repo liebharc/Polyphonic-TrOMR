@@ -12,7 +12,7 @@ torch._dynamo.config.suppress_errors = True
 from transformers import TrainingArguments, Trainer
 from data_loader import load_dataset
 from model.tromr_arch import TrOMR
-from configs import default_config
+from configs import Config
 from convert_grandstaff import grandstaff_train_index, convert_grandstaff
 from convert_primus import primus_train_index, convert_primus_dataset, primus_distorted_train_index, cpms_train_index, convert_cpms_dataset
 from convert_documents_in_the_wild import diw_train_index, convert_diw_dataset
@@ -87,9 +87,15 @@ if os.path.exists(os.path.join(git_root, "test-primus")):
 
 train_index = load_and_mix_training_sets([primus_distorted_train_index, cpms_train_index, grandstaff_train_index, diw_train_index], [1.0, 1.0, 1.0, 1.0], number_of_files)
 
-datasets = load_dataset(train_index, default_config, val_split = 0.1)
+config = Config()
+if args.fast:
+    optim = "adamw_apex_fused"
+    config.reduced_precision = True
+else:
+    optim = "adamw_torch"  # TrOMR Paper page 3 species an Adam optimizer
 
-optim = "adamw_apex_fused" if args.fast else "adamw_torch"  # TrOMR Paper page 3 species an Adam optimizer
+datasets = load_dataset(train_index, config, val_split = 0.1)
+
 print(f'Using {optim} optimizer')
 compile_model = number_of_files < 0 or number_of_files * number_of_epochs >= 50000  # Compiling needs time, but pays off for large datasets
 if compile_model:
@@ -105,8 +111,8 @@ train_args = TrainingArguments(
     evaluation_strategy="epoch",
     learning_rate=1e-4,  # TrOMR Paper page 3 specifies 1e-3, but that can cause issues with fp16 mode
     optim=optim,  
-    per_device_train_batch_size=32,  # TrOMR Paper page 3
-    per_device_eval_batch_size=16,
+    per_device_train_batch_size=16,  # TrOMR Paper page 3
+    per_device_eval_batch_size=8,
     num_train_epochs=number_of_epochs,
     weight_decay=0.01,
     load_best_model_at_end=True,
@@ -121,10 +127,10 @@ train_args = TrainingArguments(
 
 if args.pretrained:
     print('Loading pretrained model')
-    model = TrOMR(default_config)
+    model = TrOMR(config)
     model.load_state_dict(torch.load(tr_omr_pretrained), strict=False)
 else:
-    model = TrOMR(default_config)
+    model = TrOMR(config)
 
 try:
     trainer = Trainer(

@@ -18,6 +18,14 @@
 
 ## Train log
 
+## Run 69
+
+Date: 20 Apr 2024
+Training time: ~15h (fast option), aborted after epoch 14 from 25
+Commit: 3f524a8c291c32eb19998facef77c9e12599a2a8
+SER: 73%
+Manual validation result: 16.7
+
 ## Run 68
 
 Date: 14 Apr 2024
