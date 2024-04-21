@@ -9,14 +9,18 @@
 
 ## To Checks
 
-- Label Smoothing
-- Increase data set by fully masking
 - Visualize attention: https://github.com/huggingface/pytorch-image-models/discussions/1232
 - Different values for alpha and beta
-- Restore additional rhythm classes
-- Dataset with negative exampkes (no sheet music)
 
 ## Train log
+
+## Run 70
+
+Date: 21 Apr 2024
+Training time: ~17h (fast option), aborted after epoch 16 from 25
+Commit: a6b87b71b3b69d87d424f3c86500081f6146d436
+SER: 75%
+Manual validation result:
 
 ## Run 69
 
@@ -24,7 +28,7 @@ Date: 20 Apr 2024
 Training time: ~15h (fast option), aborted after epoch 14 from 25
 Commit: 3f524a8c291c32eb19998facef77c9e12599a2a8
 SER: 73%
-Manual validation result: 16.7
+Manual validation result: 15.8
 
 ## Run 68
 

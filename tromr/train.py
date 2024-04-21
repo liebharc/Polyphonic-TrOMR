@@ -54,7 +54,7 @@ git_root = os.path.join(script_location, '..')
 tr_omr_pretrained = os.path.join(script_location, 'workspace', 'checkpoints', 'img2score_epoch47.pth')
 
 number_of_files = -1
-number_of_epochs = 25
+number_of_epochs = 15
 
 parser = argparse.ArgumentParser(
                 prog='train.py',
@@ -114,7 +114,7 @@ train_args = TrainingArguments(
     per_device_train_batch_size=16,  # TrOMR Paper page 3
     per_device_eval_batch_size=8,
     num_train_epochs=number_of_epochs,
-    weight_decay=0.01,
+    weight_decay=0.001,
     load_best_model_at_end=True,
     metric_for_best_model="loss",
     logging_dir=os.path.join('logs', f'run{git_count}-{git_head}'),
