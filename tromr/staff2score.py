@@ -8,6 +8,7 @@ from transformers import PreTrainedTokenizerFast
 from model import TrOMR
 from configs import Config
 from image_processing import readimg
+import safetensors
 
 default_checkpoint_file_path = os.path.join(os.path.dirname(__file__), "workspace", "checkpoints", "pytorch_model_69-48405a06425613f3f7ce871cfe5b4b1594dccd73.pth")
 
@@ -18,7 +19,14 @@ class Staff2Score(object):
         self.model = TrOMR(config)
         if not os.path.exists(checkpoint_file_path):
             raise RuntimeError("Please download the model first to " + checkpoint_file_path)
-        self.model.load_state_dict(torch.load(checkpoint_file_path), strict=False)
+        if ".safetensors" in checkpoint_file_path:
+            tensors = {}
+            with safetensors.safe_open(checkpoint_file_path, framework="pt", device=0) as f:
+                for k in f.keys():
+                    tensors[k] = f.get_tensor(k)
+            self.model.load_state_dict(tensors, strict=False)
+        else:
+            self.model.load_state_dict(torch.load(checkpoint_file_path), strict=False)
         self.model.to(self.device)
         
         if not os.path.exists(config.filepaths.rhythmtokenizer):

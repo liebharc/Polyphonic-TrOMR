@@ -26,13 +26,14 @@ def calc_symbol_error_rate_for_list(checkpoint_file_path, dataset, config):
         ser_avg = round(100 * sum(all_sers) / len(all_sers))
         i += 1
         if i % 10 == 0:
-            print(actual, "vs", expected)
+            print("Expected:", expected)
+            print("Actual:", actual)
         percentage = round(i / total * 100)
         print(f"Progress: {percentage}%, SER: {ser}%, SER avg: {ser_avg}%")
     ser_avg = round(100 * sum(all_sers) / len(all_sers))
     print(f"Done, SER avg: {ser_avg}%")
 
-    result_file = checkpoint_file_path.replace(".pth", "_ser.txt")
+    result_file = checkpoint_file_path.split(".")[0] + "_ser.txt"
     with open(result_file, 'w') as f:
         f.write(f"SER avg: {ser_avg}%\n")
 
