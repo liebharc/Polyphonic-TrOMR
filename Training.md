@@ -14,13 +14,21 @@
 
 ## Train log
 
+## Run 71
+
+Date: 22 Apr 2024
+Training time: ~17h (fast option)
+Commit: 3b92eee2e56647fcb538b4ef5ef3704f12bfb2d1
+SER: 77%
+
 ## Run 70
 
 Date: 21 Apr 2024
 Training time: ~17h (fast option), aborted after epoch 16 from 25
 Commit: a6b87b71b3b69d87d424f3c86500081f6146d436
 SER: 75%
-Manual validation result:
+
+Looks like a focal loss doesn't help to improve the performance of the lift detection.
 
 ## Run 69
 

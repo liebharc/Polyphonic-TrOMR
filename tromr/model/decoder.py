@@ -172,11 +172,11 @@ class ScoreDecoder(nn.Module):
         loss_consist = self.calConsistencyLoss(rhythmsp, pitchsp, liftsp, notesp, mask)
         loss_rhythm = self.masked_logits_cross_entropy(rhythmsp, rhythmso, mask)
         loss_pitch = self.masked_logits_cross_entropy(pitchsp, pitchso, mask)
-        loss_lift = self.masked_focal_loss(liftsp, liftso, mask)
+        loss_lift = self.masked_logits_cross_entropy(liftsp, liftso, mask)
         loss_note = self.masked_logits_cross_entropy(notesp, noteso, mask)
         # From the TR OMR paper equation 2, we use however different values for alpha and beta
-        alpha = 0.1
-        beta = 1
+        alpha = 0.2
+        beta = 1 - alpha
         loss = alpha * (loss_rhythm + loss_pitch + loss_lift + loss_note) + beta * loss_consist
         
         return dict(
@@ -226,29 +226,6 @@ class ScoreDecoder(nn.Module):
         loss = loss.sum() / mask.sum()
 
         return loss
-
-    def masked_focal_loss(self, logits, target, mask, gamma=2.0, alpha=0.25):
-        # Apply the mask to the logits
-        mask = mask.unsqueeze(2)
-        logits = logits.masked_fill(mask == 0, self.mask_value)
-
-        # Calculate softmax
-        probs = F.softmax(logits, dim=2)
-
-        # Gather the probabilities for the target classes
-        target = target.unsqueeze(2)
-        probs = probs.gather(2, target)
-
-        # Calculate the focal loss
-        focal_loss = -alpha * (1 - probs) ** gamma * torch.log(probs)
-
-        # Apply the mask to the loss
-        focal_loss = focal_loss * mask
-
-        # Average the loss over the non-masked elements
-        focal_loss = focal_loss.sum() / mask.sum()
-
-        return focal_loss
         
 def get_decoder(config: Config):
     return ScoreDecoder(
