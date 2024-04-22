@@ -95,6 +95,9 @@ class ScoreDecoder(nn.Module):
 
         self.mask_value = -1e4 if reduced_precision else -1e9
 
+        # Weight the actual lift tokens (so neither nonote nor null) higher
+        self.lift_weights = torch.tensor([1.0, 1.0, 10.0, 10.0, 10.0, 10.0, 10.0])
+
     @torch.no_grad()
     def generate(self, start_tokens, nonote_tokens, seq_len, eos_token = None, temperature = 1., filter_thres = 0.9, **kwargs):
         device = start_tokens.device
@@ -172,7 +175,7 @@ class ScoreDecoder(nn.Module):
         loss_consist = self.calConsistencyLoss(rhythmsp, pitchsp, liftsp, notesp, mask)
         loss_rhythm = self.masked_logits_cross_entropy(rhythmsp, rhythmso, mask)
         loss_pitch = self.masked_logits_cross_entropy(pitchsp, pitchso, mask)
-        loss_lift = self.masked_logits_cross_entropy(liftsp, liftso, mask)
+        loss_lift = self.masked_logits_cross_entropy(liftsp, liftso, mask, weights=self.lift_weights)
         loss_note = self.masked_logits_cross_entropy(notesp, noteso, mask)
         # From the TR OMR paper equation 2, we use however different values for alpha and beta
         alpha = 0.2
@@ -210,14 +213,19 @@ class ScoreDecoder(nn.Module):
 
         return loss
 
-    def masked_logits_cross_entropy(self, logits, target, mask):
+    def masked_logits_cross_entropy(self, logits, target, mask, weights = None):
         logits_mask = mask.unsqueeze(2)
 
         # Apply the mask to the logits
         logits = logits.masked_fill(logits_mask == 0, self.mask_value)
 
         # Calculate the cross-entropy loss
-        loss = F.cross_entropy(logits.transpose(1, 2), target, reduction='none', ignore_index = self.ignore_index)
+        loss = F.cross_entropy(
+            logits.transpose(1, 2), 
+            target, 
+            reduction='none', 
+            weight=weights,
+            ignore_index = self.ignore_index)
 
         # Apply the mask to the loss
         loss = loss * mask
