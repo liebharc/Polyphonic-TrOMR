@@ -69,6 +69,10 @@ resume_from_checkpoint = None
 args = parser.parse_args()
 if args.resume:
     resume_from_checkpoint = args.resume
+else:
+    if os.path.exists(os.path.join(git_root, "test-primus")):
+        shutil.rmtree(os.path.join(git_root, "test-primus"))
+
 
 if not os.path.exists(primus_train_index) or not os.path.exists(primus_distorted_train_index):
     convert_primus_dataset()
@@ -81,9 +85,6 @@ if not os.path.exists(grandstaff_train_index):
 
 if not os.path.exists(diw_train_index):
     convert_diw_dataset()
-
-if os.path.exists(os.path.join(git_root, "test-primus")):
-    shutil.rmtree(os.path.join(git_root, "test-primus"))
 
 train_index = load_and_mix_training_sets([primus_distorted_train_index, cpms_train_index, grandstaff_train_index, diw_train_index], [1.0, 1.0, 1.0, 1.0], number_of_files)
 
