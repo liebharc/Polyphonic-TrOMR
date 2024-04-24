@@ -158,6 +158,40 @@ def _sort_by_pitch(lifts, pitches, rhythms, notes):
                 swap(i, j)
     return lifts, pitches, rhythms, notes
 
+def convert_alter_to_accidentals(merged):
+    """
+    Moves alter information into accidentals.
+    For example: 
+    """
+    all_results = []
+    for line in range(len(merged)):
+        key = KeyTransformation(0)
+        line_result = []
+        for symbols in re.split("\s+", merged[line].replace("+", " ")):
+            symbol_result = []
+            for symbol in re.split("(\|)", symbols):
+                if symbol.startswith("keySignature"):
+                    key = KeyTransformation(key_signature_to_circle_of_fifth(symbol.split("-")[-1]))
+                    symbol_result.append(symbol)
+                elif symbol == "barline":
+                    key = key.reset_at_end_of_measure()
+                    symbol_result.append(symbol)
+                elif symbol.startswith("note") or symbol.startswith("gracenote"):
+                    pitch = _symbol_to_pitch(symbol)
+                    alter = _get_alter(symbol)
+                    note_name = pitch[5]
+                    accidental = key.add_accidental(note_name, alter).replace("0", "N")
+                    symbol = symbol.replace(alter + "_", accidental + "_")
+                    symbol_result.append(symbol)
+                elif symbol != "|":
+                    symbol_result.append(symbol)
+                    
+            if len(symbol_result) > 0:
+                line_result.append(str.join("|", symbol_result))
+        all_results.append(str.join("+", line_result))
+    return all_results
+
+
 def split_symbols(merged):
     predlifts = []
     predpitchs = []

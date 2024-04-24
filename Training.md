@@ -14,6 +14,20 @@
 
 ## Train log
 
+## Run 74
+
+Date: 24 Apr 2024
+Training time: ~24h (fast option)
+Commit: b4af54249fca5bf93650c518c7220f5de98c843c
+SER: 77%
+
+## Run 74
+
+Date: 23 Apr 2024
+Training time: ~24h (fast option)
+Commit: 6580500e71602d5c74decde2946498c8e883392e
+SER: 77%
+
 ## Run 71
 
 Date: 22 Apr 2024

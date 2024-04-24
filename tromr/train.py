@@ -67,11 +67,13 @@ parser.add_argument("--fast", help='Uses options to accelerate the training proc
 resume_from_checkpoint = None
 
 args = parser.parse_args()
+
+checkpoint_folder = "current_training"
 if args.resume:
     resume_from_checkpoint = args.resume
 else:
-    if os.path.exists(os.path.join(git_root, "test-primus")):
-        shutil.rmtree(os.path.join(git_root, "test-primus"))
+    if os.path.exists(os.path.join(git_root, checkpoint_folder)):
+        shutil.rmtree(os.path.join(git_root, checkpoint_folder))
 
 
 if not os.path.exists(primus_train_index) or not os.path.exists(primus_distorted_train_index):
@@ -106,7 +108,7 @@ git_count = os.popen('git rev-list --count HEAD').read().strip()
 git_head = os.popen('git rev-parse HEAD').read().strip()
 
 train_args = TrainingArguments(
-    f"test-primus",
+    checkpoint_folder,
     torch_compile=compile_model,
     overwrite_output_dir=True,
     evaluation_strategy="epoch",

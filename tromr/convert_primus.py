@@ -38,6 +38,8 @@ def _find_semantic_file(path: Path):
 def _convert_file(path: Path):
     if "-pre.jpg" in str(path):
         return []
+    if "," in str(path):
+        return []
     image = cv2.imread(str(path))
     if image is None:
         print("Warning: Could not read image", path)

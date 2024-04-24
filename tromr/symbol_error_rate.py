@@ -5,7 +5,7 @@ from pathlib import Path
 import os
 import editdistance
 
-from split_merge_symbols import merge_symbols
+from split_merge_symbols import merge_symbols, convert_alter_to_accidentals
 from configs import default_config
 
 def calc_symbol_error_rate_for_list(checkpoint_file_path, dataset, config):
@@ -15,9 +15,10 @@ def calc_symbol_error_rate_for_list(checkpoint_file_path, dataset, config):
     total = len(dataset)
     for sample in dataset:
         img_path, semantic_path = sample.strip().split(",")
-        expected = _load_semantic_file(semantic_path)[0].strip()
+        expected = convert_alter_to_accidentals(_load_semantic_file(semantic_path))[0].strip()
         predrhythms, predpitchs, predlifts = model.predict(img_path)
         actual = merge_symbols(predrhythms, predpitchs, predlifts)[0].split("+")
+        actual = [symbol for symbol in actual if not symbol.startswith("timeSignature")]  # reference data has no time signature
         expected = expected.split("+")
         distance = editdistance.eval(expected, actual)
         ser = distance / len(expected)

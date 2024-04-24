@@ -70,7 +70,7 @@ class KeyTransformation:
                 self.flats.append(note)
                 return accidental
             return ""
-        elif accidental == "0":
+        else:
             placed = False
             if note in self.sharps:
                 self.sharps.remove(note)
@@ -79,7 +79,6 @@ class KeyTransformation:
                 self.flats.remove(note)
                 placed = True
             return "0" if placed else ""
-        return ""
 
     def get_alter(self, note: str) -> int:
         if note in self.sharps:

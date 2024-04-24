@@ -207,7 +207,6 @@ def convert_grandstaff(ony_recreate_semantic_files: bool = False):
     with open(index_file, 'w') as f:
         file_number = 0
         skipped_files = 0
-        multiprocessing.set_start_method('spawn')
         with multiprocessing.Pool() as p:
             for result in p.imap_unordered(_convert_file_only_semantic if ony_recreate_semantic_files else _convert_file, Path(grandstaff_root).rglob('*.krn')):
                 if len(result) > 0:
@@ -221,6 +220,7 @@ def convert_grandstaff(ony_recreate_semantic_files: bool = False):
     print('Done indexing')
 
 if __name__ == "__main__":
+    multiprocessing.set_start_method('spawn')
     ony_recreate_semantic_files = False
     if "--only-semantic" in sys.argv:
         ony_recreate_semantic_files = True
