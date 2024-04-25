@@ -97,7 +97,6 @@ class ScoreDecoder(nn.Module):
 
         # Weight the actual lift tokens (so neither nonote nor null) higher
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.lift_weights = torch.tensor([1.0, 1.0, 4.0, 4.0, 4.0, 4.0, 4.0], device=self.device)
 
     @torch.no_grad()
     def generate(self, start_tokens, nonote_tokens, seq_len, eos_token = None, temperature = 1., filter_thres = 0.9, **kwargs):
@@ -176,7 +175,7 @@ class ScoreDecoder(nn.Module):
         loss_consist = self.calConsistencyLoss(rhythmsp, pitchsp, liftsp, notesp, mask)
         loss_rhythm = self.masked_logits_cross_entropy(rhythmsp, rhythmso, mask)
         loss_pitch = self.masked_logits_cross_entropy(pitchsp, pitchso, mask)
-        loss_lift = self.masked_logits_cross_entropy(liftsp, liftso, mask, weights=self.lift_weights)
+        loss_lift = self.masked_logits_cross_entropy(liftsp, liftso, mask)
         loss_note = self.masked_logits_cross_entropy(notesp, noteso, mask)
         # From the TR OMR paper equation 2, we use however different values for alpha and beta
         alpha = 0.1

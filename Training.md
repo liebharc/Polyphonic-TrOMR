@@ -14,28 +14,52 @@
 
 ## Train log
 
-## Run 74
+## Run 77 Increased depth
+
+Date: 26 Apr 2024
+Training time: ~19h (fast option)
+Commit: f3658eb0a33cb0712ec980d944949e776e552989
+SER: %
+
+Encoder & decoder depth was increased from 4 to 6
+
+## Run 76 Training data fix for accidentals
+
+Date: 25 Apr 2024
+Training time: ~16h (fast option)
+Commit: 75d8688719494169f4b629fc51224d4aa846eee7
+SER: 77%
+
+Fixed that the training data didn't contain any natural accidentals.
+
+## Run 74 Backtracking
 
 Date: 24 Apr 2024
 Training time: ~24h (fast option)
 Commit: b4af54249fca5bf93650c518c7220f5de98c843c
 SER: 77%
 
-## Run 74
+After experiments with focal loss and weight decay, we are backtracking to run 63.
+
+## Run 74 
 
 Date: 23 Apr 2024
 Training time: ~24h (fast option)
 Commit: 6580500e71602d5c74decde2946498c8e883392e
 SER: 77%
 
-## Run 71
+Adding a weight to the lift/accidental tokens.
+
+## Run 71 Weight decay
 
 Date: 22 Apr 2024
 Training time: ~17h (fast option)
 Commit: 3b92eee2e56647fcb538b4ef5ef3704f12bfb2d1
 SER: 77%
 
-## Run 70
+Reduced weight decay.
+
+## Run 70 Focal loss
 
 Date: 21 Apr 2024
 Training time: ~17h (fast option), aborted after epoch 16 from 25
@@ -44,29 +68,7 @@ SER: 75%
 
 Looks like a focal loss doesn't help to improve the performance of the lift detection.
 
-## Run 69
-
-Date: 20 Apr 2024
-Training time: ~15h (fast option), aborted after epoch 14 from 25
-Commit: 3f524a8c291c32eb19998facef77c9e12599a2a8
-SER: 73%
-Manual validation result: 15.8
-
-## Run 68
-
-Date: 14 Apr 2024
-Training time: ~8h (fast option), aborted after epoch 8 from 25
-Commit: fb86d320fe82c81c352b69a059024a883e83c346
-SER: 78%
-
-## Run 67
-
-Date: 14 Apr 2024
-Training time: ~24h
-Commit: fb86d320fe82c81c352b69a059024a883e83c346
-SER: 76%
-
-## Run 63
+## Run 63 Negative data set
 
 Date: 11 Apr 2024
 Training time: ~26h (fast option)
@@ -149,12 +151,6 @@ Date: 24 Mar 2024
 Training time: ~24h (fast option)
 Commit: 516093a3f3841235a06ca8de6759f1db6b8fc39a
 SER: 82%
-Result:
-
-```
-{'eval_loss': 0.003167663002386689, 'eval_runtime': 168.9123, 'eval_samples_per_second': 111.022, 'eval_steps_per_second': 13.883, 'epoch': 40.0}
-{'train_runtime': 86163.9708, 'train_samples_per_second': 78.355, 'train_steps_per_second': 4.897, 'train_loss': 0.04649836303557555, 'epoch': 40.0}
-```
 
 ### Run 0
 

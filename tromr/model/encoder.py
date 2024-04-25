@@ -39,9 +39,6 @@ class CustomVisionTransformer(VisionTransformer):
 
 def get_encoder(config: Config):
     backbone_layers = list(config.backbone_layers)
-    #backbone = InceptionResnetV2(
-    #    num_classes=0, global_pool='', in_chans=config.channels
-    #)
     backbone = ResNetV2(
         num_classes=0, global_pool='', in_chans=config.channels,
         drop_rate=0.1, drop_path_rate=0.1,

@@ -25,6 +25,8 @@ def calc_symbol_error_rate_for_list(checkpoint_file_path, dataset, config):
         all_sers.append(ser)
         ser = round(100 * ser)
         ser_avg = round(100 * sum(all_sers) / len(all_sers))
+        actual = sort_chords(actual)
+        expected = sort_chords(expected)
         i += 1
         if i % 10 == 0:
             print("Expected:", expected)
@@ -42,6 +44,12 @@ def calc_symbol_error_rate_for_list(checkpoint_file_path, dataset, config):
 def _load_semantic_file(semantic_path):
     with open(semantic_path, 'r') as f:
         return f.readlines()
+    
+def sort_chords(symbols):
+    result = []
+    for symbol in symbols:
+        result.append(str.join("|", sorted(symbol.split("|"))))
+    return result
 
 if __name__ == "__main__":
     checkpoint_file = sys.argv[1]

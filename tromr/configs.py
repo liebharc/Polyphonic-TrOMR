@@ -66,12 +66,12 @@ class Config:
         self.lift_flat = 5
         self.noteindexes = [129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146]
         self.encoder_structure = "hybrid"
-        self.encoder_depth = 4
+        self.encoder_depth = 6
         self.backbone_layers = [2, 3, 7]
         self.encoder_dim = 256
         self.encoder_heads = 8
         self.decoder_dim = 256
-        self.decoder_depth = 4
+        self.decoder_depth = 6
         self.decoder_heads = 8
         self.temperature = 0.01
         self.reduced_precision = False
