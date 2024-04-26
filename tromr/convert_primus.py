@@ -6,6 +6,7 @@ import cv2
 import multiprocessing
 
 from image_processing import add_image_into_tr_omr_canvas
+from sanity_check_primus_semantics import compare_semantic_with_acnostic
 
 
 script_location = os.path.dirname(os.path.realpath(__file__))
@@ -55,6 +56,10 @@ def _convert_file(path: Path):
     semantic_file = _find_semantic_file(path)
     if semantic_file is None:
         print("Warning: No semantic file found for", path)
+        return []
+    number_of_errors = compare_semantic_with_acnostic(str(semantic_file))
+    if number_of_errors > 0:
+        print("Warning: Semantic file and acnostic file seem to mismatch in the number of accidentals", semantic_file)
         return []
     return [str(preprocessed_path.relative_to(git_root)) + "," + str(semantic_file.relative_to(git_root)) + '\n']
 

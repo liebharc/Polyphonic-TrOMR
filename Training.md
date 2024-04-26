@@ -18,8 +18,9 @@
 
 Date: 26 Apr 2024
 Training time: ~19h (fast option)
-Commit: f3658eb0a33cb0712ec980d944949e776e552989
-SER: %
+Commit: 9e2c14122607a63c25253d1c5378c706859395ab
+SER: 74%
+Manual validation result: 22.3
 
 Encoder & decoder depth was increased from 4 to 6
 

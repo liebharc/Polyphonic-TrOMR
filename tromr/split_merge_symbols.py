@@ -29,13 +29,14 @@ def merge_symbols(predrhythms, predpitchs, predlifts):
 
 def _get_alter(symbol):
     if symbol.startswith("note") or symbol.startswith("gracenote"):
-        if "##" in symbol:
+        note = symbol.split("_")[0]
+        if "##" in note:
             return "#"  # We have no support for double accidentals right now
-        elif "#" in symbol:
+        elif "#" in note:
             return "#"
-        elif "bb" in symbol:
+        elif "bb" in note:
             return "b"  # We have no support for double accidentals right now
-        elif "b" in symbol:
+        elif "b" in note:
             return "b"
         return ""
     return None
@@ -74,6 +75,7 @@ def _add_dots(duration):
 
 def _translate_duration(duration):
     duration = duration.replace("second", "breve")
+    duration = duration.replace("double_whole", "breve")
     duration = duration.replace("double", "breve")
     duration = duration.replace("quadruple", "breve")
     duration = duration.replace("thirty", "thirty_second")
@@ -84,7 +86,7 @@ def _translate_duration(duration):
 
 def _symbol_to_rhythm(symbol):
     if symbol.startswith("note") or symbol.startswith("gracenote"):
-        note = "note-" + _translate_duration(symbol.split("_")[1])
+        note = "note-" + _translate_duration(str.join("_", symbol.split("_")[1:]))
         return note + _add_dots(symbol)
     symbol = symbol.replace("rest-quadruple_whole", "multirest-2")
     symbol = symbol.replace("_fermata", "")

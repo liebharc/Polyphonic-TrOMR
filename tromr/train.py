@@ -88,7 +88,7 @@ if not os.path.exists(grandstaff_train_index):
 if not os.path.exists(diw_train_index):
     convert_diw_dataset()
 
-train_index = load_and_mix_training_sets([primus_distorted_train_index, cpms_train_index, grandstaff_train_index, diw_train_index], [1.0, 1.0, 1.0, 1.0], number_of_files)
+train_index = load_and_mix_training_sets([primus_distorted_train_index, grandstaff_train_index, diw_train_index], [1.0, 1.0, 1.0], number_of_files)
 
 config = Config()
 if args.fast:
