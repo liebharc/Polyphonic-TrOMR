@@ -39,6 +39,14 @@ def key_signature_to_circle_of_fifth(key_signature):
         return 0
     return inv_definition[key_signature]
 
+class NoKeyTransformation:
+    
+        def add_accidental(self, note: str, accidental: str) -> str:
+            return accidental
+    
+        def reset_at_end_of_measure(self):
+            return self
+
 class KeyTransformation:
 
     def __init__(self, circle_of_fifth: int):
@@ -79,14 +87,6 @@ class KeyTransformation:
                 self.flats.remove(note)
                 placed = True
             return "0" if placed else ""
-
-    def get_alter(self, note: str) -> int:
-        if note in self.sharps:
-            return "#"
-        elif note in self.flats:
-            return "b"
-        else:
-            return ""
         
     def reset_at_end_of_measure(self):
         return KeyTransformation(self.circle_of_fifth)

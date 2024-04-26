@@ -1,6 +1,6 @@
 import re
 
-from circle_of_fifths import KeyTransformation, key_signature_to_circle_of_fifth
+from circle_of_fifths import KeyTransformation, NoKeyTransformation, key_signature_to_circle_of_fifth
 
 def merge_symbols(predrhythms, predpitchs, predlifts):
     merges = []
@@ -75,7 +75,6 @@ def _add_dots(duration):
 
 def _translate_duration(duration):
     duration = duration.replace("second", "breve")
-    duration = duration.replace("double_whole", "breve")
     duration = duration.replace("double", "breve")
     duration = duration.replace("quadruple", "breve")
     duration = duration.replace("thirty", "thirty_second")
@@ -86,7 +85,7 @@ def _translate_duration(duration):
 
 def _symbol_to_rhythm(symbol):
     if symbol.startswith("note") or symbol.startswith("gracenote"):
-        note = "note-" + _translate_duration(str.join("_", symbol.split("_")[1:]))
+        note = "note-" + _translate_duration(symbol.split("_")[1])
         return note + _add_dots(symbol)
     symbol = symbol.replace("rest-quadruple_whole", "multirest-2")
     symbol = symbol.replace("_fermata", "")
@@ -194,7 +193,7 @@ def convert_alter_to_accidentals(merged):
     return all_results
 
 
-def split_symbols(merged):
+def split_symbols(merged, convert_alter=False):
     predlifts = []
     predpitchs = []
     predrhythms = []
@@ -204,7 +203,7 @@ def split_symbols(merged):
         predpitch = []
         predrhythm = []
         prednote = []
-        key = KeyTransformation(0)
+        key = KeyTransformation(0) if convert_alter else NoKeyTransformation()
         for symbols in re.split("\s+", merged[line]):
             symbollift = []
             symbolpitch = []
@@ -212,7 +211,8 @@ def split_symbols(merged):
             symbolnote = []
             for symbol in re.split("(\|)", symbols):
                 if symbol.startswith("keySignature"):
-                    key = KeyTransformation(key_signature_to_circle_of_fifth(symbol.split("-")[-1]))
+                    if convert_alter:
+                        key = KeyTransformation(key_signature_to_circle_of_fifth(symbol.split("-")[-1]))
                 if symbol == "barline":
                     key = key.reset_at_end_of_measure()
 

@@ -6,7 +6,7 @@ import json
 import re
 
 import xmltodict
-from circle_of_fifths import KeyTransformation, circle_of_fifth_to_key_signature
+from circle_of_fifths import KeyTransformation, NoKeyTransformation, circle_of_fifth_to_key_signature
 
 def _translate_duration(duration):
     definition = {
@@ -42,12 +42,12 @@ def _count_dots(note):
         return ""
     return "." * len(_ensure_list(note["dot"]))
 
-def _music_part_to_semantic(part):
+def _music_part_to_semantic(part, convert_alter=False):
     try:
         semantic = []
         for measure in _ensure_list(part["measure"]):
             chord = []
-            key = KeyTransformation(0)
+            key = KeyTransformation(0) if convert_alter else NoKeyTransformation()
             if "attributes" in measure:
                 for attribute in _ensure_list(measure["attributes"]):
                     if "clef" in attribute:
@@ -55,7 +55,8 @@ def _music_part_to_semantic(part):
                         semantic.append("clef-" + clef["sign"] + clef["line"])
                     if "key" in attribute:
                         semantic.append("keySignature-" + circle_of_fifth_to_key_signature(int(attribute["key"]["fifths"])))
-                        key = KeyTransformation(int(attribute["key"]["fifths"]))
+                        if convert_alter:
+                            key = KeyTransformation(int(attribute["key"]["fifths"]))
                     if "time" in attribute:
                         semantic.append("timeSignature-" + attribute["time"]["beats"] + "/" + attribute["time"]["beat-type"])
             if "note" in measure:
