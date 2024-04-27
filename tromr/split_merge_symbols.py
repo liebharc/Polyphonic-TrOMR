@@ -180,7 +180,7 @@ def convert_alter_to_accidentals(merged):
                 elif symbol.startswith("note") or symbol.startswith("gracenote"):
                     pitch = _symbol_to_pitch(symbol)
                     alter = _get_alter(symbol)
-                    note_name = pitch[5]
+                    note_name = pitch[5:7]
                     accidental = key.add_accidental(note_name, alter).replace("0", "N")
                     symbol = symbol.replace(alter + "_", accidental + "_")
                     symbol_result.append(symbol)
@@ -192,8 +192,19 @@ def convert_alter_to_accidentals(merged):
         all_results.append(str.join("+", line_result))
     return all_results
 
+def split_semantic_file(file_path):
+    is_cpms = "CPMS" in file_path
+    with open(file_path, 'r') as f:
+        return split_symbols(f.readlines(),  convert_to_modified_semantic=not is_cpms)
 
-def split_symbols(merged, convert_alter=False):
+
+def split_symbols(merged, convert_to_modified_semantic = True):
+    """
+    modified_semantic: Semantic format but with accidentals depending on how they are placed.
+
+    E.g. the semantic format is Key D Major, Note C#, Note Cb, Note Cb
+    so the TrOMR will be: Key D Major, Note C, Note Cb, Note C because the flat is the only visible accidental in the image.
+    """
     predlifts = []
     predpitchs = []
     predrhythms = []
@@ -203,15 +214,15 @@ def split_symbols(merged, convert_alter=False):
         predpitch = []
         predrhythm = []
         prednote = []
-        key = KeyTransformation(0) if convert_alter else NoKeyTransformation()
-        for symbols in re.split("\s+", merged[line]):
+        key = KeyTransformation(0) if convert_to_modified_semantic else NoKeyTransformation()
+        for symbols in re.split("\s+", merged[line].strip()):
             symbollift = []
             symbolpitch = []
             symbolrhythm = []
             symbolnote = []
             for symbol in re.split("(\|)", symbols):
                 if symbol.startswith("keySignature"):
-                    if convert_alter:
+                    if convert_to_modified_semantic:
                         key = KeyTransformation(key_signature_to_circle_of_fifth(symbol.split("-")[-1]))
                 if symbol == "barline":
                     key = key.reset_at_end_of_measure()
@@ -230,7 +241,7 @@ def split_symbols(merged, convert_alter=False):
                     symbolnote.append(_symbol_to_note(symbol))
                     alter = _get_alter(symbol)
                     if alter is not None:
-                        note_name = pitch[5]
+                        note_name = pitch[5:7]
                         alter = key.add_accidental(note_name, alter)
                         symbollift.append(_alter_to_lift(alter))
                     else:

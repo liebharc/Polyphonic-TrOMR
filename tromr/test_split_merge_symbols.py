@@ -12,7 +12,8 @@ class TestMergeSymbols(unittest.TestCase):
 
     def test_merge(self):
         actual = merge_symbols(predryhthm, predpitch, predlift)
-        self.assertEqual(actual, convert_alter_to_accidentals(merged))
+        expected = convert_alter_to_accidentals(merged)
+        self.assertEqual(actual, expected)
 
     def test_split(self):
         # Replace the + with \t as this is what the input provides
@@ -52,6 +53,12 @@ class TestMergeSymbols(unittest.TestCase):
         merged_multirests = ["multirest-1 multirest-2 multirest-3 multirest-50 multirest-100 rest-whole2"]
         _actuallift, _actualpitch, actualrhythm, _actualnotes = split_symbols(merged_multirests)
         self.assertEqual(actualrhythm, [['rest-whole', 'multirest-2', 'multirest-3', 'multirest-50', 'multirest-50', 'multirest-2']])
+
+    def test_accidentals_dont_affect_ocatves(self):
+        merged_accidentals = ["clef-G2 keySignature-CM note-F#4_quarter note-F#3_quarter"]
+        actuallift, actualpitch, _actualrhythm, _actualnotes = split_symbols(merged_accidentals)
+        actuallift = [actualpitch[0][i] + l for i, l in enumerate(actuallift[0]) if l != "nonote"]
+        self.assertEqual(actuallift, ['note-F4lift_#', 'note-F3lift_#'])
 
 if __name__ == '__main__':
     unittest.main()        

@@ -14,6 +14,22 @@
 
 ## Train log
 
+## Run 79 Use semantic encoding without changes to the accidentals
+
+
+Date: 27 Apr 2024
+Training time: ~18h (fast option)
+Commit: f732c3abc10b5b0b3e8942f722d695eb725e3e53
+SER: 76%
+Manual validation result: 80.9 
+
+So far we used the format which TrOMR seems to use: Semantic format but with accidentals depending on how they are placed.
+
+E.g. the semantic format is Key D Major, Note C#, Note Cb, Note Cb
+so the TrOMR will be: Key D Major, Note C, Note Cb, Note C because the flat is the only visible accidental in the image.
+
+With this attempt we try to use the semantic format without any changes to the accidentals.
+
 ## Run 77 Increased depth
 
 Date: 26 Apr 2024

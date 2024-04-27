@@ -4,7 +4,7 @@ import os
 import cv2
 import re
 from termcolor import colored
-from split_merge_symbols import merge_symbols, convert_alter_to_accidentals, split_symbols, merge_symbols
+from split_merge_symbols import merge_symbols, convert_alter_to_accidentals, split_symbols, merge_symbols, split_semantic_file
 
 index_file_name = sys.argv[1]
 number_of_samples_per_iteration = int(sys.argv[2])
@@ -51,7 +51,7 @@ while True:
                 original_agnostic = file.readline().strip().replace("+", " ")
         else:
             original_agnostic = agnostic_path
-        predlifts, predpitchs, predryhthms, _prednotes = split_symbols([original_semantic])
+        predlifts, predpitchs, predryhthms, _prednotes = split_semantic_file(semantic_path)
         semantic = merge_symbols(predryhthms, predpitchs, predlifts)
         if images is None:
             images = image

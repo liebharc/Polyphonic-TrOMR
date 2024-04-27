@@ -58,9 +58,7 @@ for line in lines:
     img_path, semantic_path = line.split(",")
     if not os.path.exists(semantic_path):
         continue
-    with open(semantic_path, 'r') as file:
-        semantic = file.readline().strip()
-    predlifts, predpitchs, predrhythms, _prednotes = split_merge_symbols.split_symbols([semantic])
+    predlifts, predpitchs, predrhythms, _prednotes = split_merge_symbols.split_semantic_file(semantic_path)
     add_all(lift_stats, predlifts[0])
     add_all(pitch_stats, predpitchs[0])
     add_all(rhythm_stats, predrhythms[0])

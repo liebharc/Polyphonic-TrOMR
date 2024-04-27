@@ -46,6 +46,16 @@ class NoKeyTransformation:
     
         def reset_at_end_of_measure(self):
             return self
+        
+def repeat_note_for_all_octaves(notes):
+    """
+    Takes a list of notes and returns a list of notes that includes all octaves.
+    """
+    result = []
+    for note in notes:
+        for octave in range(11):
+            result.append(note + str(octave))
+    return result
 
 class KeyTransformation:
 
@@ -54,9 +64,9 @@ class KeyTransformation:
         self.sharps = []
         self.flats = []
         if circle_of_fifth > 0:
-            self.sharps = circle_of_fifth_notes_positive[0:circle_of_fifth]
+            self.sharps = repeat_note_for_all_octaves(circle_of_fifth_notes_positive[0:circle_of_fifth])
         elif circle_of_fifth < 0:
-            self.flats = circle_of_fifth_notes_negative[0:abs(circle_of_fifth)]
+            self.flats = repeat_note_for_all_octaves(circle_of_fifth_notes_negative[0:abs(circle_of_fifth)])
 
     def add_accidental(self, note: str, accidental: str) -> str:
         """

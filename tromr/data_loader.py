@@ -5,7 +5,7 @@ import os
 import torch
 import random
 from configs import Config
-from split_merge_symbols import split_symbols
+from split_merge_symbols import split_semantic_file
 from image_processing import readimg
 
 script_location = os.path.dirname(os.path.realpath(__file__))
@@ -126,9 +126,7 @@ class DataLoader():
     def _read_semantic(self, path):
         if path == "nosymbols":
             return [[]], [[]], [[]], [[]]
-        with open(path, 'r') as file:
-            semantic = file.readline().rstrip()
-            return split_symbols([semantic])
+        return split_semantic_file(path)
     
     def __getitem__(self, idx):
         entry = self.corpus_list[idx]
@@ -168,9 +166,9 @@ def _translate_symbols(symbols, vocab, default_token, vocab_name):
 
 
 rhythm_tokenizer_path = os.path.join(script_location, 'workspace', 'tokenizers', 'tokenizer_rhythm.json')
-pitch_tokenizer_path = os.path.join(script_location,  'workspace', 'tokenizers', 'tokenizer_pitch.json')
-note_tokenizer_path = os.path.join(script_location,  'workspace', 'tokenizers', 'tokenizer_note.json')
-lift_tokenizer_path = os.path.join(script_location,  'workspace', 'tokenizers', 'tokenizer_lift.json')
+pitch_tokenizer_path = os.path.join(script_location, 'workspace', 'tokenizers', 'tokenizer_pitch.json')
+note_tokenizer_path = os.path.join(script_location, 'workspace', 'tokenizers', 'tokenizer_note.json')
+lift_tokenizer_path = os.path.join(script_location, 'workspace', 'tokenizers', 'tokenizer_lift.json')
 
 def load_dataset(samples, 
                  config, 
