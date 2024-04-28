@@ -31,11 +31,9 @@
         "vocab": {
             "nonote"    : 0,
             "lift_null" : 1,
-            "lift_##"   : 2,
-            "lift_#"    : 3,
-            "lift_bb"   : 4,
-            "lift_b"    : 5,
-            "lift_N"    : 6
+            "lift_#"    : 2,
+            "lift_b"    : 3,
+            "lift_N"    : 4
         },
         "unk_token": "<unk>"
     }

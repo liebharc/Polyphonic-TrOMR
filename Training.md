@@ -14,8 +14,23 @@
 
 ## Train log
 
-## Run 79 Use semantic encoding without changes to the accidentals
+## Run 81 Decreased depth
 
+Date: 
+Training time:
+Commit: 
+SER: 
+
+Reverting 9e2c14122607a63c25253d1c5378c706859395ab and reverting to a depth of 4.
+
+## Run 80 fixes arround accidentals in the data set
+
+Date: 28 Apr 2024
+Training time: ~18h (fast option)
+Commit: 840318915929e5efe780780a543ea053b479d375
+SER: 79%
+
+## Run 79 Use semantic encoding without changes to the accidentals
 
 Date: 27 Apr 2024
 Training time: ~18h (fast option)
