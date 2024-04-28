@@ -14,6 +14,22 @@
 
 ## Train log
 
+SER failues shown here should be taken with a grain of salt. The SER is calculated on data which was acquired differently than then training sets, which should make it fair. On the other hand the data is pretty wild and you couldn't expect the SER to be low.
+
+## Next Runs
+
+Try CustomVisionTransformer
+Change alpha/beta ratio
+
+## Run 81 Increased alpha to 0.2
+
+Date: 
+Training time:
+Commit: 
+SER: 
+
+Increased alpha to 0.2.
+
 ## Run 81 Decreased depth
 
 Date: 
@@ -187,7 +203,5 @@ SER: 82%
 ### Run 0
 
 The weights from the [original paper](https://arxiv.org/abs/2308.09370).
-SER\*: 74%
+SER: 74%
 Manual validation result: 9.3
-
-- SER failues shown here should be taken with a grain of salt

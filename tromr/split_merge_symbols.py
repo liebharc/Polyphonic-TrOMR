@@ -182,7 +182,8 @@ def convert_alter_to_accidentals(merged):
                     alter = _get_alter(symbol)
                     note_name = pitch[5:7]
                     accidental = key.add_accidental(note_name, alter).replace("0", "N")
-                    symbol = symbol.replace(alter + "_", accidental + "_")
+                    parts = symbol.split("_")
+                    symbol = parts[0].replace("N", "").replace("#", "").replace("b", "") + accidental + "_" + parts[1]
                     symbol_result.append(symbol)
                 elif symbol != "|":
                     symbol_result.append(symbol)
