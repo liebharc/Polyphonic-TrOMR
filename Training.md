@@ -7,11 +7,6 @@
 - Clone [CPMS](https://github.com/itec-hust/CPMS) to `$gitroot/CPMS`
 - Make sure you have installed pytorch and CUDA correctly
 
-## To Checks
-
-- Visualize attention: https://github.com/huggingface/pytorch-image-models/discussions/1232
-- Different values for alpha and beta
-
 ## Train log
 
 SER failues shown here should be taken with a grain of salt. The SER is calculated on data which was acquired differently than then training sets, which should make it fair. On the other hand the data is pretty wild and you couldn't expect the SER to be low.
@@ -20,22 +15,33 @@ SER failues shown here should be taken with a grain of salt. The SER is calculat
 
 Try CustomVisionTransformer
 Change alpha/beta ratio
+Only increase encoder or decoder depth
 
-## Run 81 Increased alpha to 0.2
+## Run 83 CustomVisionTransformer
 
 Date: 
 Training time:
 Commit: 
 SER: 
+
+Enabled CustomVisionTransformer again.
+
+## Run 82 Increased alpha to 0.2
+
+Date: 29 Apr 2024
+Training time: ~18h (fast option)
+Commit: acbdf6dc235f393ef75158bdcf539e3b2e5b435e
+SER: 69%
 
 Increased alpha to 0.2.
 
 ## Run 81 Decreased depth
 
-Date: 
-Training time:
-Commit: 
-SER: 
+Date: 29 Apr 2024
+Training time: ~18h (fast option)
+Commit: 185c235cd0979faa2c087e59e71dbba684a68fb6
+SER: 72%
+Manual validation result: 13.1
 
 Reverting 9e2c14122607a63c25253d1c5378c706859395ab and reverting to a depth of 4.
 
@@ -44,7 +50,7 @@ Reverting 9e2c14122607a63c25253d1c5378c706859395ab and reverting to a depth of 4
 Date: 28 Apr 2024
 Training time: ~18h (fast option)
 Commit: 840318915929e5efe780780a543ea053b479d375
-SER: 79%
+SER: 76%
 
 ## Run 79 Use semantic encoding without changes to the accidentals
 

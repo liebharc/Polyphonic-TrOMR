@@ -54,7 +54,7 @@ class TestMergeSymbols(unittest.TestCase):
         _actuallift, _actualpitch, actualrhythm, _actualnotes = split_symbols(merged_multirests)
         self.assertEqual(actualrhythm, [['rest-whole', 'multirest-2', 'multirest-3', 'multirest-50', 'multirest-50', 'multirest-2']])
 
-    def test_accidentals_dont_affect_ocatves(self):
+    def test_accidentals_dont_affect_octaves(self):
         merged_accidentals = ["clef-G2 keySignature-CM note-F#4_quarter note-F#3_quarter"]
         actuallift, actualpitch, _actualrhythm, _actualnotes = split_symbols(merged_accidentals)
         actuallift = [actualpitch[0][i] + l for i, l in enumerate(actuallift[0]) if l != "nonote"]

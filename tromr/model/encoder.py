@@ -52,7 +52,7 @@ def get_encoder(config: Config):
         return HybridEmbed(**x, patch_size=ps//min_patch_size, backbone=backbone)
 
     # TODO: A shorter run showed that a VisionTransformer gives the same results as a CustomVisionTransformer
-    encoder = VisionTransformer(img_size=(config.max_height, config.max_width),
+    encoder = CustomVisionTransformer(img_size=(config.max_height, config.max_width),
                                       patch_size=config.patch_size,
                                       in_chans=config.channels,
                                       num_classes=0,
