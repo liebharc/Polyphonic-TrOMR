@@ -39,8 +39,12 @@ class DataLoader():
         result = []
         for entry in corpus_list:
             image, semantic_file = entry.strip().split(',')
-            semantic = self._read_semantic(semantic_file)[2]
-            semantic_len = len(semantic[0])
+            semantic = self._read_semantic(semantic_file)
+            lifts = semantic[0][0]
+            semantic_len = len(lifts)
+            number_of_flats = lifts.count("lift_b")
+            number_of_sharps = lifts.count("lift_#")
+            number_of_naturals = lifts.count("lift_N")
             # If we would have the money to do it we would want to use: mask_lens = range(1, semantic_len)
             # Instead we construct take up to 3 random mask lengths and the full length
             mask_lens = set()
@@ -51,8 +55,14 @@ class DataLoader():
             # Seed the random generator here to get more reproducible results
             # Although it isn't clear if this really affects the results more 
             # than all the randomness in the conversion of the data sets
-            random.seed(image_basename_hash)  
-            for _ in range(1, min(2, semantic_len)):
+            random.seed(image_basename_hash)
+            number_of_desired_samples = 2
+            if number_of_naturals > number_of_flats + number_of_sharps:
+                # If we have more naturals than other accidentals than the naturals
+                # likely are there to cancel the key signature. Since we don't have
+                # a lot of examples for this we create additional data
+                number_of_desired_samples *= 2
+            for _ in range(1, min(number_of_desired_samples, semantic_len)):
                 mask_lens.add(random.randint(1, semantic_len) + 1)
             
             #mask_lens = range(2, semantic_len + 2)  # + 2 for the BOS and EOS token

@@ -92,6 +92,7 @@ class ScoreDecoder(nn.Module):
         note_mask = torch.zeros(num_rhythm_tokens)
         note_mask[noteindexes] = 1
         self.note_mask = nn.Parameter(note_mask)
+        self.iteration = 0
 
         self.mask_value = -1e4 if reduced_precision else -1e9
 
@@ -180,7 +181,11 @@ class ScoreDecoder(nn.Module):
         # From the TR OMR paper equation 2, we use however different values for alpha and beta
         alpha = 0.2
         beta = 1 - alpha
-        loss = alpha * (loss_rhythm + loss_pitch + loss_lift + loss_note) + beta * loss_consist
+        loss_sum = loss_rhythm + loss_pitch + loss_lift + loss_note
+        self.iteration += 1
+        if self.iteration % 10000 == 0:
+            print(f'Loss sum: {loss_sum} ({[loss_rhythm, loss_pitch, loss_lift, loss_note]}), Loss consist: {loss_consist}')
+        loss = alpha * loss_sum + beta * loss_consist
         
         return dict(
             loss_rhythm=loss_rhythm,

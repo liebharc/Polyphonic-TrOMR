@@ -16,6 +16,7 @@ SER failues shown here should be taken with a grain of salt. The SER is calculat
 Try CustomVisionTransformer
 Change alpha/beta ratio
 Only increase encoder or decoder depth
+Higher weight to naturals which cancel the key?
 
 ## Run 83 CustomVisionTransformer
 
@@ -32,6 +33,7 @@ Date: 29 Apr 2024
 Training time: ~18h (fast option)
 Commit: acbdf6dc235f393ef75158bdcf539e3b2e5b435e
 SER: 69%
+Manual validation result: 12.9
 
 Increased alpha to 0.2.
 
