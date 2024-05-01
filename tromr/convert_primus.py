@@ -18,11 +18,12 @@ cpms_train_index = os.path.join(git_root, 'cpms_index.txt')
 
 def _replace_suffix(path: Path, suffix: str):
     suffixes = [
-        "_distorted.jpg",
         ".jpg",
         ".jpeg",
         ".png"
     ]
+    if suffix == ".semantic":
+        suffixes.insert(0, "_distorted.jpg")
     for s in suffixes:
         if s in str(path):
             return Path(str(path).replace(s, suffix))

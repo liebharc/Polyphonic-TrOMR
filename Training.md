@@ -18,12 +18,19 @@ Change alpha/beta ratio
 Only increase encoder or decoder depth
 Higher weight to naturals which cancel the key?
 
+## Run 84 More training data with naturals
+
+Date: 1 May 2024
+Training time: ~17h (fast option)
+Commit: cf7313f0bcec82f4f7da738fbacabd56084f6604
+SER: 70%
+
 ## Run 83 CustomVisionTransformer
 
-Date: 
-Training time:
-Commit: 
-SER: 
+Date: 30 Apr 2024
+Training time: ~18h (fast option)
+Commit: 80896fdba4dbe4f9b2bbba3dd66377b3b0d1faa5
+SER: 71%
 
 Enabled CustomVisionTransformer again.
 
