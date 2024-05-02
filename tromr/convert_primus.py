@@ -6,6 +6,7 @@ import cv2
 import multiprocessing
 
 from image_processing import add_image_into_tr_omr_canvas
+from convert_grandstaff import distort_image
 
 
 script_location = os.path.dirname(os.path.realpath(__file__))
@@ -36,7 +37,7 @@ def _find_semantic_file(path: Path):
     return None
 
 
-def _convert_file(path: Path):
+def _convert_file(path: Path, distort=False):
     if "-pre.jpg" in str(path):
         return []
     if "," in str(path):
@@ -53,18 +54,23 @@ def _convert_file(path: Path):
         print("Warning: Unknown extension", path)
         return []
     cv2.imwrite(str(preprocessed_path.absolute()), preprocessed)
+    if distort:
+        distort_image(str(preprocessed_path.absolute()))
     semantic_file = _find_semantic_file(path)
     if semantic_file is None:
         print("Warning: No semantic file found for", path)
         return []
     return [str(preprocessed_path.relative_to(git_root)) + "," + str(semantic_file.relative_to(git_root)) + '\n']
 
+def _convert_and_distort_file(path: Path):
+    return _convert_file(path, True)
 
-def _convert_dataset(glob_result, index_file: str):
+
+def _convert_dataset(glob_result, index_file: str, distort=False):
     with open(index_file, 'w') as f:
         file_number = 0
         with multiprocessing.Pool(8) as p:
-            for result in p.imap_unordered(_convert_file, glob_result):
+            for result in p.imap_unordered(_convert_and_distort_file if distort else _convert_file, glob_result):
                 f.writelines(result)
                 file_number += 1
                 if file_number % 1000 == 0:
@@ -73,7 +79,7 @@ def _convert_dataset(glob_result, index_file: str):
 
 def convert_primus_dataset():
     print('Indexing PrIMuS dataset')
-    _convert_dataset(Path(primus).rglob('*.png'), primus_train_index)
+    _convert_dataset(Path(primus).rglob('*.png'), primus_train_index, distort=True)
     print('Indexing PrIMuS Distorted dataset')
     _convert_dataset(Path(primus).rglob('*_distorted.jpg'), primus_distorted_train_index)
     print('Done indexing')

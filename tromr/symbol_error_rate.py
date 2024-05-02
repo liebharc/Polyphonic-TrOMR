@@ -20,13 +20,13 @@ def calc_symbol_error_rate_for_list(checkpoint_file_path, dataset, config):
         actual = merge_symbols(predrhythms, predpitchs, predlifts)[0].split("+")
         actual = [symbol for symbol in actual if not symbol.startswith("timeSignature")]  # reference data has no time signature
         expected = expected.split("+")
+        actual = sort_chords(actual)
+        expected = sort_chords(expected)
         distance = editdistance.eval(expected, actual)
         ser = distance / len(expected)
         all_sers.append(ser)
         ser = round(100 * ser)
         ser_avg = round(100 * sum(all_sers) / len(all_sers))
-        actual = sort_chords(actual)
-        expected = sort_chords(expected)
         i += 1
         if i % 10 == 0:
             print("Expected:", expected)

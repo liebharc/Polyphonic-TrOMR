@@ -10,7 +10,7 @@ from configs import Config
 from image_processing import readimg
 import safetensors
 
-default_checkpoint_file_path = os.path.join(os.path.dirname(__file__), "workspace", "checkpoints", "pytorch_model_69-48405a06425613f3f7ce871cfe5b4b1594dccd73.pth")
+default_checkpoint_file_path = os.path.join(os.path.dirname(__file__), "workspace", "checkpoints", "pytorch_model_82-df5dbfdb19ea8a18b0d0c2df2efa40a04abd6206.pth")
 
 class Staff2Score(object):
     def __init__(self, config: Config, checkpoint_file_path = default_checkpoint_file_path):

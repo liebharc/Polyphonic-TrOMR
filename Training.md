@@ -24,13 +24,14 @@ Date: 1 May 2024
 Training time: ~17h (fast option)
 Commit: cf7313f0bcec82f4f7da738fbacabd56084f6604
 SER: 70%
+Manual validation result: 17.5
 
 ## Run 83 CustomVisionTransformer
 
 Date: 30 Apr 2024
 Training time: ~18h (fast option)
 Commit: 80896fdba4dbe4f9b2bbba3dd66377b3b0d1faa5
-SER: 71%
+SER: 66%
 
 Enabled CustomVisionTransformer again.
 
@@ -39,7 +40,7 @@ Enabled CustomVisionTransformer again.
 Date: 29 Apr 2024
 Training time: ~18h (fast option)
 Commit: acbdf6dc235f393ef75158bdcf539e3b2e5b435e
-SER: 69%
+SER: 64%
 Manual validation result: 12.9
 
 Increased alpha to 0.2.
@@ -49,7 +50,7 @@ Increased alpha to 0.2.
 Date: 29 Apr 2024
 Training time: ~18h (fast option)
 Commit: 185c235cd0979faa2c087e59e71dbba684a68fb6
-SER: 72%
+SER: 67%
 Manual validation result: 13.1
 
 Reverting 9e2c14122607a63c25253d1c5378c706859395ab and reverting to a depth of 4.

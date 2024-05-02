@@ -49,7 +49,22 @@ def _split_staff_image(path, basename):
     dark_pixels_per_row = dark_pixels_per_row[upper_bound:-lower_bound]
     norm = (dark_pixels_per_row - np.mean(dark_pixels_per_row)) / np.std(dark_pixels_per_row)
     centers, _ = find_peaks(norm, height=1.4, distance=3, prominence=1)
-    if len(centers) != 10:
+    if len(centers) == 5:
+            upper = _prepare_image(image)
+            predistorted_path = basename + "_distorted.jpg"
+            if os.path.exists(predistorted_path):
+                predistorted_image = cv2.imread(predistorted_path)
+                single_image = _prepare_image(predistorted_image)
+                cv2.imwrite(basename + "_single-pre.jpg", single_image)
+                return distort_image(basename + "_single-pre.jpg"), None
+            print(f"INFO: Couldn't find pre-distorted image {path}, using custom distortions")
+            cv2.imwrite(basename + "_upper-pre.jpg", upper)
+            return distort_image(basename + "_upper-pre.jpg"), None
+    elif len(centers) == 10:
+        middle = np.int32(np.round((centers[4] + centers[5]) / 2))
+        center_upper = centers[2] + _random_center_offset()
+        center_lower = centers[7] + _random_center_offset()
+    elif len(centers) != 10 and False:
         conv_len = image.shape[0] // 4 + 1
         blurred = np.convolve(dark_pixels_per_row, np.ones(conv_len) / conv_len, mode='same')
 
@@ -58,17 +73,17 @@ def _split_staff_image(path, basename):
         if len(peaks) >= 1:
             peaks = [peaks[len(peaks) // 2]]
             #print(f"INFO: Using central valley {path}")
-        elif len(centers) == 5:
+        if len(centers) == 5:
             upper = _prepare_image(image)
             predistorted_path = basename + "_distorted.jpg"
             if os.path.exists(predistorted_path):
                 predistorted_image = cv2.imread(predistorted_path)
                 single_image = _prepare_image(predistorted_image)
                 cv2.imwrite(basename + "_single-pre.jpg", single_image)
-                return _distort_image(basename + "_single-pre.jpg"), None
+                return distort_image(basename + "_single-pre.jpg"), None
             print(f"INFO: Couldn't find pre-distorted image {path}, using custom distortions")
             cv2.imwrite(basename + "_upper-pre.jpg", upper)
-            return _distort_image(basename + "_upper-pre.jpg"), None
+            return distort_image(basename + "_upper-pre.jpg"), None
         else:
             print(f"INFO: Failed to split {path}, found {len(centers)} centers, no central valley")
             return None, None
@@ -76,19 +91,18 @@ def _split_staff_image(path, basename):
         center_upper = peaks[0] // 2 + _random_center_offset()
         center_lower = peaks[0] + (image.shape[0] - peaks[0]) // 2 + _random_center_offset()
     else:
-        middle = np.int32(np.round((centers[4] + centers[5]) / 2))
-        center_upper = centers[2] + _random_center_offset()
-        center_lower = centers[7] + _random_center_offset()
+        return None, None
 
-    if middle < 15 or middle > image.shape[0] - 15:
+    overlap = 10
+    if middle < overlap or middle > image.shape[0] - overlap:
         print(f"INFO: Failed to split {path}, middle is at {middle}")
         return None, None
     
-    upper = _prepare_image(_center_image(image[:middle], center_upper))
-    lower = _prepare_image(_center_image(image[middle:], center_lower))
+    upper = _prepare_image(image[:middle+overlap])
+    lower = _prepare_image(image[middle-overlap:])
     cv2.imwrite(basename + "_upper-pre.jpg", upper)
     cv2.imwrite(basename + "_lower-pre.jpg", lower)
-    return _distort_image(basename + "_upper-pre.jpg"), _distort_image(basename + "_lower-pre.jpg")
+    return distort_image(basename + "_upper-pre.jpg"), distort_image(basename + "_lower-pre.jpg")
 
 def _random_center_offset():
     return np.random.randint(-20, 20)
@@ -129,7 +143,7 @@ def _check_staff_image(path, basename):
         return None, None
     return basename + "_upper.jpg", basename + "_lower.jpg"
 
-def _distort_image(path):
+def distort_image(path):
     image = PIL.Image.open(path)
     image = _add_random_gray_tone(image)
     pipeline = Compose(

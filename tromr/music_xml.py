@@ -72,8 +72,8 @@ def _music_part_to_semantic(part):
                         else:
                             semantic.append("rest-" + _translate_duration(note["type"]) + dot)
                     if "pitch" in note:
-                        key.add_accidental(note["pitch"]["step"] + alter + note["pitch"]["octave"], _get_alter(note["pitch"]))
                         alter = _get_alter(note["pitch"])
+                        key.add_accidental(note["pitch"]["step"] + alter + note["pitch"]["octave"], _get_alter(note["pitch"]))
                         chord.append("note-" + note["pitch"]["step"] + alter + note["pitch"]["octave"] + "_" + _translate_duration(note["type"]) + _count_dots(note))
                         
             if len(chord) > 0:
