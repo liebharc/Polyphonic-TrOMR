@@ -54,7 +54,7 @@ git_root = os.path.join(script_location, '..')
 tr_omr_pretrained = os.path.join(script_location, 'workspace', 'checkpoints', 'img2score_epoch47.pth')
 
 number_of_files = -1
-number_of_epochs = 15
+number_of_epochs = 20
 
 parser = argparse.ArgumentParser(
                 prog='train.py',
