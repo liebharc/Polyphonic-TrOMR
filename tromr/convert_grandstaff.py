@@ -13,6 +13,7 @@ import multiprocessing
 
 from image_processing import add_image_into_tr_omr_canvas
 from music_xml import music_xml_to_semantic
+from warp import warp_image_randomly
 
 script_location = os.path.dirname(os.path.realpath(__file__))
 git_root = os.path.join(script_location, '..')
@@ -148,11 +149,11 @@ def distort_image(path):
     image = _add_random_gray_tone(image)
     pipeline = Compose(
              [tr.RandomRotation(degrees = 1),
-              tr.RandomPerspective(0.05),
               tr.ColorJitter(brightness = 0.1, contrast = 0.1, saturation = 0.1, hue = 0.1),
               tr.RandomAdjustSharpness(2),])
 
     augmented_image = pipeline(img = image)
+    augmented_image = warp_image_randomly(augmented_image)
     augmented_image.save(path)
     return path
 
