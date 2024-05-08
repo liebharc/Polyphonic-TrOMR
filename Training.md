@@ -18,6 +18,14 @@ Change alpha/beta ratio
 Only increase encoder or decoder depth
 Higher weight to naturals which cancel the key?
 
+## Run 90 warped data sets, no neg dataset
+
+Date: 6 May 2024
+Training time: ~14h (fast option)
+Commit: 8f774545179f3e7bfdbd58fe1a6c55473b8d4343
+SER: 65%
+Manual validation result: 14.5
+
 ## Run 86 Cleaned up data set
 
 Date: 3 May 2024
